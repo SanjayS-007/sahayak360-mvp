@@ -15,10 +15,16 @@ class Settings(BaseSettings):
 
     @property
     def async_database_url(self) -> str:
-        """Convert postgresql:// to postgresql+asyncpg:// for SQLAlchemy async."""
+        """Convert postgresql:// to postgresql+asyncpg:// for SQLAlchemy async.
+        Also convert sslmode query param to asyncpg ssl param."""
         url = self.DATABASE_URL
         if url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        # asyncpg uses ?ssl=true not ?sslmode=require
+        if "sslmode=require" in url:
+            url = url.replace("sslmode=require", "ssl=true")
+        elif "sslmode=disable" in url:
+            url = url.replace("sslmode=disable", "ssl=false")
         return url
 
     @property
