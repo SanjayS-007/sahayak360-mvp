@@ -20,16 +20,12 @@ out/
 .turbo/
 *.tsbuildinfo
 
-# Environment
-.env
+# Environment — .env is tracked (private repo, team use only)
 .env.local
 .env.*.local
 
 # Docker
 docker-compose.override.yml
-
-# Test artifacts
-backend/test_pipeline.py
 
 # IDE
 .vscode/
