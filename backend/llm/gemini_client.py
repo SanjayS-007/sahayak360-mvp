@@ -25,7 +25,7 @@ def get_gemini_model() -> genai.GenerativeModel:
             raise RuntimeError("GEMINI_API_KEY not configured")
         genai.configure(api_key=settings.GEMINI_API_KEY)
         _model = genai.GenerativeModel(
-            "gemini-1.5-flash-latest",
+            "gemini-2.0-flash",
             generation_config=genai.GenerationConfig(
                 temperature=0.1,
                 top_p=0.95,
@@ -43,7 +43,7 @@ def get_vision_model() -> genai.GenerativeModel:
             raise RuntimeError("GEMINI_API_KEY not configured")
         genai.configure(api_key=settings.GEMINI_API_KEY)
         _vision_model = genai.GenerativeModel(
-            "gemini-1.5-flash-latest",
+            "gemini-2.0-flash",
             generation_config=genai.GenerationConfig(
                 temperature=0.0,
                 max_output_tokens=4096,

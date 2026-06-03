@@ -2,8 +2,11 @@
 Data Ingestion routes — structured, freetext, and vision channels.
 """
 
+import logging
 import uuid
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy import select
@@ -82,12 +85,22 @@ async def ingest_freetext(
     decision = route_freetext(req)
 
     # Parse via Gemini
-    ast = await parse_freetext_to_ast(
-        raw_text=req.raw_text,
-        teacher_id=req.teacher_id,
-        class_section=req.class_section or "unknown",
-        subject=req.subject or "mathematics",
-    )
+    try:
+        ast = await parse_freetext_to_ast(
+            raw_text=req.raw_text,
+            teacher_id=req.teacher_id,
+            class_section=req.class_section or "unknown",
+            subject=req.subject or "mathematics",
+        )
+    except Exception as e:
+        logger.warning(f"Gemini freetext parsing unavailable: {e}")
+        return IngestResponse(
+            status="queued",
+            event_id=None,
+            parse_method="ai_unavailable",
+            validation=ValidationResult(),
+            graph_mutations=[],
+        )
 
     # Build a StructuredIngestRequest from the parsed AST and run through orchestrator
     structured_req = StructuredIngestRequest(
