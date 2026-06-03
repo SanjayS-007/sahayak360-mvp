@@ -11,69 +11,379 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)](https://postgresql.org)
 [![Neo4j](https://img.shields.io/badge/Neo4j-5-008CC1?style=for-the-badge&logo=neo4j)](https://neo4j.com)
 [![Gemini](https://img.shields.io/badge/Google_Gemini_1.5_Flash-AI-4285F4?style=for-the-badge&logo=google)](https://ai.google.dev)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 [![Tests](https://img.shields.io/badge/Pipeline_Tests-8%2F8_PASS-brightgreen?style=for-the-badge)](#-running-tests)
-[![Status](https://img.shields.io/badge/Status-MVP_Ready-blue?style=for-the-badge)](#)
 
 ---
 
-**Sahayak 360** is a full-stack, production-ready educational intelligence platform that ingests student assessments via **structured JSON**, **natural language**, or **scanned answer sheet images** — then runs a deterministic **10-step cognitive pipeline** to detect knowledge gaps, compute Bayesian mastery scores, assign MTSS intervention tiers, generate adaptive micro-quizzes via Gemini AI, and deliver them in real time over WebSocket.
+**Sahayak 360** ingests student assessments via **structured JSON**, **natural language**, or **scanned answer sheet photos** and within 4 seconds runs a **10-step cognitive pipeline** — detecting learning gaps, computing Bayesian mastery, assigning MTSS intervention tiers, generating adaptive quizzes via Gemini AI, and delivering them in real time over WebSocket.
 
-[Quick Start](#-quick-start) · [Team Onboarding](#-team-setup--onboarding) · [Architecture](#-architecture) · [API Docs](#-api-reference) · [Pipeline Deep Dive](#-10-step-pipeline-deep-dive) · [Data Models](#-data-models) · [Env Variables](#-environment-variables) · [Tests](#-running-tests)
+[Fresh Machine Setup](#-fresh-machine-setup-start-here) · [Quick Start (Manual)](#-quick-start--manual-no-docker) · [Docker (Optional)](#-docker-optional) · [Architecture](#-architecture) · [API Docs](#-api-reference) · [Tests](#-running-tests)
 
 </div>
 
 ---
 
-## ✨ Features
+## ⚡ What It Does in 4 Seconds
 
-### 📥 Multi-Channel Assessment Ingestion
-| Channel | Endpoint | Processing | Latency |
-|---------|----------|-----------|---------|
-| **Structured JSON** | `POST /api/ingest/structured` | Direct AST validation + Pandas | ~50ms |
-| **Freetext / Voice** | `POST /api/ingest/freetext` | Gemini 1.5 Flash → AST parse | ~1.5s |
-| **Vision / OCR** | `POST /api/ingest/vision` | OpenCV preprocess → Gemini Vision → AST | ~3s |
-
-All three channels funnel into the **same deterministic 10-step pipeline**.
-
-### 🧠 10-Step Cognitive Pipeline
 ```
-1. Route          → Fast lane (structured) or Slow lane (AI-parsed)
-2. Validate       → Pandas cross-field math checks + anomaly detection
-3. Gap Detection  → Per-KC threshold evaluation (configurable cutoffs)
-4. Mastery Update → Bayesian Knowledge Tracing (BKT) per Knowledge Component
-5. Risk Scoring   → ABC composite (Academic 50% + Behavioral 25% + Cognitive 25%)
-6. MTSS Plan      → Tier 1 / 2 / 2+ / 3 assignment + intervention steps
-7. Tickets        → Intervention ticket factory with 5-state lifecycle
-8. Persist Event  → PostgreSQL async upsert
-9. Upsert Mastery → Per-student per-KC mastery record
-10. Neo4j Sync    → Knowledge DAG update + prerequisite chain propagation
+Teacher photographs answer sheet   →   4 seconds   →   "STU-01: CRITICAL risk"
+                                                       + Adaptive quiz dispatched
+                                                         to student's screen NOW
 ```
 
-### 📊 Role-Based Dashboards
-| Role | Features |
-|------|----------|
-| **Teacher** | Class risk heatmap, KC mastery overview, student roster with trend sparklines |
-| **Student** | Personal KC mastery bars, gap list, quiz history, MTSS tier badge |
-| **Admin** | Institution stats: teacher/student counts, tier distribution, active tickets |
+- **3 input channels:** typed JSON, natural language, photo of answer sheet
+- **BKT (Bayesian Knowledge Tracing):** mastery as probability, not just percentage
+- **Neo4j knowledge graph:** finds ROOT prerequisite gaps, not just symptoms
+- **MTSS Tier 1/2/3** intervention plans generated automatically
+- **WebSocket delivery:** quiz appears on student's device within 5 seconds of teacher click
+- **8/8 pipeline tests pass** with zero database or API key needed
 
-### ⚡ Real-Time Quiz Engine (MCP)
-- Teacher triggers a micro-test from the dashboard
-- Gemini generates contextual questions per failing Knowledge Component
-- MCP Quiz Dispatcher pushes questions over WebSocket to the student browser
-- Student answers in real time; submissions rerun BKT mastery deltas
+---
 
-### 🔍 NL-to-Cypher Query Interface
-- Teacher asks: *"Which students in 8-A are weak in fractions and missing prerequisite division?"*
-- Gemini converts to safe read-only Cypher with write-keyword guard
-- Neo4j traverses the knowledge DAG and returns prerequisite chain insights
+## 🖥️ Fresh Machine Setup (Start Here)
 
-### 🛡️ Security
-- JWT HS256 auth with configurable expiry
-- Role-based route guards: `teacher` / `student` / `admin`
-- WRITE_KEYWORDS blocklist in NL-to-Cypher safety layer
-- Pydantic V2 strict validation at every ingestion boundary
-- bcrypt password hashing (passlib)
+> **Already have Python 3.11+, Node.js 18+, PostgreSQL 16, and Neo4j 5?**
+> Skip to [Quick Start](#-quick-start--manual-no-docker).
+
+All commands below are copy-paste ready for **Windows PowerShell**.
+
+---
+
+### Step 1 — Install Python 3.13
+
+```powershell
+# Check if Python is already installed
+python --version
+# If you see "Python 3.11" or higher → skip this step
+
+# Install via winget (built into Windows 10/11)
+winget install Python.Python.3.13
+
+# Close and reopen PowerShell, then verify:
+python --version    # Expected: Python 3.13.x
+pip --version       # Expected: pip 24.x
+```
+
+> **No winget?** Download from https://www.python.org/downloads/ — tick **"Add Python to PATH"** during install.
+
+---
+
+### Step 2 — Install Node.js 20 LTS
+
+```powershell
+# Check if Node.js is already installed
+node --version
+# If you see "v18" or higher → skip this step
+
+# Install Node.js 20 LTS via winget
+winget install OpenJS.NodeJS.LTS
+
+# Close and reopen PowerShell, then verify:
+node --version    # Expected: v20.x.x
+npm --version     # Expected: 10.x.x
+```
+
+> **No winget?** Download the LTS installer from https://nodejs.org/en/download
+
+---
+
+### Step 3 — Install PostgreSQL 16
+
+```powershell
+# Check if PostgreSQL is already installed
+psql --version
+# If you see "psql (PostgreSQL) 16.x" → skip this step
+
+# Install via winget
+winget install PostgreSQL.PostgreSQL.16
+# Set superuser password to: postgres   (remember this)
+
+# Verify after install (PostgreSQL runs as a Windows service automatically):
+psql -U postgres -c "SELECT version();"
+# Expected: PostgreSQL 16.x ...
+```
+
+> **No winget?** Download from https://www.postgresql.org/download/windows/ — use the interactive installer, set password to `postgres`.
+
+---
+
+### Step 4 — Install Neo4j 5
+
+```powershell
+# Easiest: Install Neo4j Desktop (free GUI)
+# Download from: https://neo4j.com/download/
+# Install it → Open → Create a local database → Start it
+# Default bolt port: 7687
+# Set the database password to: neo4j_dev_2026
+
+# OR install Neo4j Community Server manually:
+winget install Neo4j.Neo4j
+# After install:
+C:\neo4j\bin\neo4j.bat console
+# Open http://localhost:7474 → login neo4j/neo4j → set password to: neo4j_dev_2026
+```
+
+> Verify Neo4j is running: open **http://localhost:7474** in your browser.
+
+---
+
+### Step 5 — Get a Gemini API Key (Free)
+
+1. Go to **https://aistudio.google.com/app/apikey**
+2. Click **"Create API Key"**
+3. Copy the key — you will paste it into `backend/.env` in the next step.
+
+> Free tier: **60 requests/minute** — more than enough for development and demo.
+
+---
+
+## 🚀 Quick Start — Manual (No Docker)
+
+> Docker is available but can fail on some machines. **The manual path below always works.**
+
+### 1. Clone the Repository
+
+```powershell
+git clone https://github.com/SanjayS-007/sahayak360-mvp.git
+cd sahayak360-mvp
+```
+
+---
+
+### 2. Backend Setup
+
+Run these commands in PowerShell from the repo root:
+
+```powershell
+cd backend
+
+# Create virtual environment
+python -m venv venv
+
+# Activate (Windows)
+.\venv\Scripts\activate
+# You will see (venv) at the start of your prompt — that means it worked
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install ALL Python dependencies in one command
+pip install -r requirements.txt
+```
+
+The `requirements.txt` installs:
+```
+fastapi  uvicorn  pydantic  pydantic-settings  pandas  numpy
+google-generativeai  opencv-python-headless  neo4j  sqlalchemy
+asyncpg  python-jose  passlib  websockets  python-multipart  pillow  httpx  python-dotenv
+```
+
+```powershell
+# Open backend/.env and replace the Gemini key placeholder
+notepad .env
+# Find:    GEMINI_API_KEY=test_key_placeholder
+# Replace: GEMINI_API_KEY=AIza...your_actual_key_here
+# Save and close
+```
+
+```powershell
+# Create the PostgreSQL database and user
+psql -U postgres -c "CREATE USER sahayak WITH PASSWORD 'sahayak_dev_2026';"
+psql -U postgres -c "CREATE DATABASE sahayak360 OWNER sahayak;"
+# Enter your postgres superuser password when prompted
+
+# Create all tables
+python -c "import asyncio; from db.postgres import init_db; asyncio.run(init_db())"
+
+# Load demo data (users, sample events, tickets)
+psql -U sahayak -d sahayak360 -f ..\scripts\seed_postgres.sql
+# Password: sahayak_dev_2026
+
+# Start the backend
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Expected output:**
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Application startup complete.
+```
+
+**Verify in a new PowerShell tab:**
+```powershell
+curl http://localhost:8000/health
+# Expected: {"status":"healthy","service":"sahayak-360-api","version":"1.0.0"}
+```
+
+---
+
+### 3. Frontend Setup
+
+Open a **new PowerShell tab** (keep the backend running):
+
+```powershell
+cd sahayak360-mvp\frontend
+
+# Install ALL Node.js dependencies (takes 2-3 minutes first time — normal)
+npm install
+
+# Create local environment file
+copy .env.local.example .env.local
+# Default: NEXT_PUBLIC_API_URL=http://localhost:8000  ← already correct, no changes needed
+
+# Start the frontend
+npm run dev
+```
+
+**Expected output:**
+```
+▲ Next.js 14.x.x
+- Local:  http://localhost:3000
+- Ready in 2.1s
+```
+
+Open **http://localhost:3000** in your browser.
+
+---
+
+### 4. Seed the Neo4j Knowledge Graph
+
+1. Open **http://localhost:7474**
+2. Login: `neo4j` / `neo4j_dev_2026`
+3. Click the file/folder icon → paste the entire contents of `scripts/seed_neo4j.cypher`
+4. Press **Ctrl+Enter** to run
+
+This loads: 8 Knowledge Components, 5 prerequisite chains, 5 demo students.
+
+---
+
+### ✅ Verify All Services Are Running
+
+| Service | URL | Expected Response |
+|---------|-----|-------------------|
+| **Frontend** | http://localhost:3000 | Login page |
+| **Backend API** | http://localhost:8000/health | `{"status":"healthy"}` |
+| **Swagger UI** | http://localhost:8000/docs | Interactive API docs |
+| **Neo4j Browser** | http://localhost:7474 | Graph database UI |
+
+---
+
+## 👤 Demo Login Accounts
+
+| Role | Email | Password | Access |
+|------|-------|----------|--------|
+| **Teacher** | `teacher@sahayak.edu` | `demo1234` | Class dashboard, ingest, query, quiz dispatch |
+| **Student** | `student@sahayak.edu` | `demo1234` | Personal mastery, real-time quiz |
+| **Admin** | `admin@sahayak.edu` | `demo1234` | Institution overview |
+
+---
+
+## 🧪 Running Tests
+
+> Tests run with **zero database, zero Gemini API key, zero Docker** — just Python.
+
+```powershell
+cd backend
+.\venv\Scripts\activate
+python test_pipeline.py
+```
+
+**Expected output:**
+```
+=== SAHAYAK 360 — Pipeline Integration Tests ===
+
+TEST 1: StructuredIngestRequest validation ... PASS
+TEST 2: AssessmentEventAST construction ..... PASS
+TEST 3: Pandas cross-field validation ....... PASS
+TEST 4: Threshold evaluator ................. PASS
+TEST 5: Bayesian Knowledge Tracing (BKT) .... PASS
+TEST 6: ABC Risk scorer ..................... PASS
+TEST 7: MTSS engine ......................... PASS
+TEST 8: Ticket lifecycle state machine ...... PASS
+
+=== 8/8 TESTS PASSED (0.31s) ===
+```
+
+---
+
+## 🐳 Docker (Optional)
+
+> Docker is provided as a convenience option only. **If docker-compose gives you errors, use the manual setup above.**
+
+```powershell
+# Prerequisites: Docker Desktop must be installed and running
+# Download from: https://www.docker.com/products/docker-desktop/
+
+# Verify Docker is running
+docker --version
+docker compose version
+
+# Build and start full stack (first run takes ~5 minutes)
+docker compose up --build
+```
+
+**Common docker-compose errors and fixes:**
+
+| Error Message | Fix |
+|---------------|-----|
+| `Cannot connect to the Docker daemon` | Open **Docker Desktop** app and wait for the whale icon to stop animating |
+| `port is already in use: 5432` | PostgreSQL is already running locally. Either stop it: `net stop postgresql-x64-16` or edit `docker-compose.yml` to map `5433:5432` |
+| `port is already in use: 7474` | Neo4j is already running locally. Stop it or change port in `docker-compose.yml` |
+| `no configuration file provided` | Run `docker compose up` from the repo root (`sahayak360-mvp/`), not from inside `backend/` |
+| Frontend is blank after startup | Wait 60 seconds — Next.js first compile inside Docker is slow |
+| `Error: ENOENT requirements.txt` | Run from repo root, not subdirectory |
+
+**Recommended hybrid approach** (databases in Docker, app runs locally):
+```powershell
+# Start only the databases in Docker
+docker compose up -d db neo4j
+
+# Then run backend + frontend manually (faster dev experience)
+cd backend ; .\venv\Scripts\activate ; uvicorn main:app --reload --port 8000
+cd frontend ; npm run dev
+```
+
+---
+
+## ⚙️ Environment Variables
+
+### `backend/.env` — committed with dev defaults (private repo)
+
+```env
+# PostgreSQL
+DATABASE_URL=postgresql+asyncpg://sahayak:sahayak_dev_2026@localhost:5432/sahayak360
+
+# Neo4j
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=neo4j_dev_2026
+
+# ⚠ ONLY LINE YOU MUST CHANGE
+# Get your free key from: https://aistudio.google.com/app/apikey
+GEMINI_API_KEY=test_key_placeholder
+
+# JWT Auth
+JWT_SECRET=dev_secret_key_2026
+JWT_ALGORITHM=HS256
+JWT_EXPIRY_MINUTES=1440
+
+# CORS
+CORS_ORIGINS=http://localhost:3000
+```
+
+**What works WITHOUT a Gemini key:**
+- ✅ Structured JSON ingestion (full 10-step pipeline)
+- ✅ All 8 pipeline tests
+- ✅ Dashboard, mastery, quiz, risk scoring
+- ❌ Freetext / Voice ingestion
+- ❌ Vision / photo ingestion
+- ❌ NL-to-Cypher queries
+
+### `frontend/.env.local`
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
 ---
 
@@ -104,13 +414,102 @@ All three channels funnel into the **same deterministic 10-step pipeline**.
            │                      │                  │
   ┌────────▼────────┐  ┌──────────▼──────┐  ┌───────▼────────────┐
   │  PostgreSQL 16   │  │    Neo4j 5       │  │  Google Gemini     │
-  │  assessment_events  │  Knowledge DAG   │  │  1.5 Flash API     │
+  │  assessment_events│  │  Knowledge DAG   │  │  1.5 Flash API     │
   │  mastery_records │  │  PREREQUISITE_OF │  │  freetext→AST      │
-  │  tickets/users   │  │  MASTERED edges  │  │  vision→AST        │
+  │  tickets / users │  │  MASTERED edges  │  │  vision→AST        │
   └─────────────────┘  └──────────────────┘  │  quiz generation   │
-                                              │  NL→Cypher         │
                                               └────────────────────┘
 ```
+
+---
+
+## ✨ Features
+
+### 📥 Multi-Channel Ingestion
+| Channel | Endpoint | Processing | Latency |
+|---------|----------|-----------|---------|
+| Structured JSON | `POST /api/ingest/structured` | Direct AST validation | ~50ms |
+| Freetext / Voice | `POST /api/ingest/freetext` | Gemini 1.5 Flash → AST | ~1.5s |
+| Vision / OCR | `POST /api/ingest/vision` | OpenCV → Gemini Vision → AST | ~3s |
+
+### 🧠 10-Step Pipeline
+```
+Step 1:  Route          → Fast lane (JSON) or Slow lane (AI-parsed)
+Step 2:  Validate       → Pandas cross-field math + anomaly detection
+Step 3:  Gap Detection  → Per-KC threshold (default 60%)
+Step 4:  Mastery Update → BKT bayesian_update() per Knowledge Component
+Step 5:  Risk Scoring   → ABC composite: 50% Academic + 25% Behavioral + 25% Cognitive
+Step 6:  MTSS Plan      → Tier 1/2/2+/3 assignment + structured intervention actions
+Step 7:  Tickets        → Intervention tickets with 5-state lifecycle
+Step 8:  Persist Event  → PostgreSQL async upsert
+Step 9:  Upsert Mastery → Per-student per-KC mastery record
+Step 10: Neo4j Sync     → Knowledge DAG update + prerequisite chain propagation
+```
+
+---
+
+## 📡 API Reference
+
+Full interactive docs at **http://localhost:8000/docs**
+
+### Auth
+| Method | Endpoint | Body |
+|--------|----------|------|
+| `POST` | `/api/auth/register` | `{email, password, name, role}` |
+| `POST` | `/api/auth/login` | `{email, password}` → returns JWT |
+| `GET` | `/api/auth/me` | — |
+
+### Ingestion — Minimal body example
+```json
+{
+  "teacher_id": "TCH-01",
+  "student_id": "STU-01",
+  "class_section": "8-A",
+  "subject": "mathematics",
+  "department_id": "DEPT-MATH",
+  "assessment_type": "formative",
+  "max_score": 30,
+  "total_obtained": 12,
+  "items": [
+    {
+      "question_id": "Q1",
+      "knowledge_component_id": "KC-MATH-FRAC-01",
+      "knowledge_component_name": "Basic Fractions",
+      "max_marks": 10,
+      "obtained_marks": 3
+    }
+  ]
+}
+```
+
+### Dashboard
+| Endpoint | Auth | Returns |
+|----------|------|---------|
+| `GET /api/dashboard/teacher/overview?class_section=8-A` | teacher | Risk heatmap |
+| `GET /api/dashboard/student/mastery` | student | KC mastery bars |
+| `GET /api/dashboard/admin/overview` | admin | Institution stats |
+
+### Quiz (WebSocket)
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| `POST` | `/api/quiz/dispatch` | `{student_id, kc_ids[], num_questions}` |
+| `POST` | `/api/quiz/submit` | `{session_id, responses[]}` |
+| `WS` | `/ws/student/{id}?token=JWT` | Real-time quiz delivery |
+
+---
+
+## 🔧 Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `(venv) not showing` — ModuleNotFoundError | Run `.\venv\Scripts\activate` before any python command |
+| `database 'sahayak360' does not exist` | Run steps in [Backend Setup](#2-backend-setup) from `psql -U postgres -c "CREATE USER..."` |
+| `ServiceUnavailable: bolt://localhost:7687` | Neo4j is not running — open Neo4j Desktop and click Start |
+| `GEMINI_API_KEY not configured` | Edit `backend/.env`, replace `test_key_placeholder` with your real key |
+| `npm install` hangs | Run `npm cache clean --force` then retry |
+| Port 8000 already in use | `netstat -ano \| findstr :8000` → `taskkill /PID <number> /F` |
+| Port 3000 already in use | `npm run dev -- --port 3001` |
+| `psql is not recognized` | PostgreSQL bin folder not in PATH — restart PowerShell after install, or add `C:\Program Files\PostgreSQL\16\bin` to system PATH |
 
 ---
 
@@ -119,580 +518,94 @@ All three channels funnel into the **same deterministic 10-step pipeline**.
 ```
 sahayak-360/
 ├── backend/
-│   ├── main.py                          # App entry point, lifespan, all routes registered
-│   ├── config.py                        # Pydantic Settings — all env vars
-│   ├── requirements.txt                 # Python deps (pip / uv compatible)
-│   ├── Dockerfile
-│   ├── .env                             # ⚠ Dev credentials (private repo — team use)
-│   ├── test_pipeline.py                 # Integration tests — 8 stages, no DB required
-│   │
-│   ├── api/                             # Thin route controllers
-│   │   ├── routes_auth.py               # /register /login /me
-│   │   ├── routes_ingest.py             # /structured /freetext /vision
-│   │   ├── routes_dashboard.py          # teacher/student/admin analytics
-│   │   ├── routes_quiz.py               # /dispatch /submit
-│   │   ├── routes_query.py              # /ask /student/{id}/insights
-│   │   └── routes_websocket.py          # WS connection registry
-│   │
-│   ├── core/                            # Pure business logic — fully testable, no I/O
-│   │   ├── ast_schema.py                # Frozen AST v2.0 schema
-│   │   ├── rehydration_governor.py      # Fast/Slow lane routing
-│   │   ├── pandas_validator.py          # Cross-field math checks
-│   │   ├── threshold_evaluator.py       # Per-KC gap detection
-│   │   ├── mastery_updater.py           # BKT bayesian_update()
-│   │   ├── risk_scorer.py               # ABC composite scorer
-│   │   ├── mtss_engine.py               # MTSS tier + intervention plan
-│   │   ├── ticket_lifecycle.py          # 5-state intervention ticket FSM
-│   │   └── knowledge_dag.py             # Neo4j Cypher + DAG propagation
-│   │
-│   ├── db/
-│   │   ├── models.py                    # SQLAlchemy async ORM
-│   │   ├── postgres.py                  # Async engine + session factory
-│   │   └── neo4j_driver.py             # Async Neo4j driver singleton
-│   │
-│   ├── llm/
-│   │   ├── gemini_client.py             # Singleton Gemini wrapper
-│   │   ├── freetext_parser.py           # NL → AST via Gemini
-│   │   ├── quiz_generator.py            # KC-aware quiz generation
-│   │   ├── nl_to_cypher.py              # NL → safe read-only Cypher
-│   │   └── prompts/                     # Prompt templates (.txt)
-│   │       ├── freetext_to_ast.txt
-│   │       ├── quiz_generation.txt
-│   │       ├── nl_to_cypher.txt
-│   │       └── vision_extraction.txt
-│   │
-│   ├── mcp/
-│   │   └── quiz_dispatcher.py           # MCP pipeline: generate → push WS
-│   │
-│   ├── services/
-│   │   ├── ingestion_orchestrator.py    # Master 10-step pipeline
-│   │   └── dashboard_analytics.py       # Analytics aggregators
-│   │
-│   └── vision/
-│       ├── opencv_preprocessor.py       # Grayscale → denoise → threshold → deskew
-│       └── extractor.py                 # OpenCV + Gemini Vision → AST
+│   ├── main.py                    # FastAPI app entry, all routes registered
+│   ├── config.py                  # Pydantic Settings — all env vars
+│   ├── requirements.txt           # 18 Python dependencies
+│   ├── .env                       # Dev credentials (private repo)
+│   ├── test_pipeline.py           # 8 tests — no DB/API key needed
+│   ├── api/                       # Route controllers (thin layer)
+│   ├── core/                      # Pure business logic — fully testable
+│   │   ├── ast_schema.py          # Frozen AST v2.0 (Pydantic V2)
+│   │   ├── mastery_updater.py     # BKT bayesian_update()
+│   │   ├── risk_scorer.py         # ABC composite scorer
+│   │   ├── mtss_engine.py         # MTSS tier + intervention plans
+│   │   └── ...
+│   ├── db/                        # SQLAlchemy async ORM + Neo4j driver
+│   ├── llm/                       # Gemini client + prompts
+│   ├── mcp/quiz_dispatcher.py     # MCP pipeline: generate → PostgreSQL → WebSocket
+│   ├── services/                  # Ingestion orchestrator (10 steps)
+│   └── vision/                    # OpenCV preprocessor + extractor
 │
 ├── frontend/
-│   ├── next.config.mjs
-│   ├── package.json / tsconfig.json / tailwind.config.ts
-│   ├── Dockerfile
+│   ├── package.json
 │   ├── .env.local.example
-│   ├── messages/en.json                 # i18n strings
-│   └── src/
-│       ├── app/
-│       │   ├── (auth)/login/            register/
-│       │   ├── teacher/dashboard/       input/  query/  students/
-│       │   ├── student/dashboard/       quiz/
-│       │   └── admin/dashboard/
-│       ├── components/
-│       │   ├── shared/  app-shell  header  sidebar
-│       │   ├── dashboard/  mastery-chart  risk-chart
-│       │   └── ui/  button  card  badge  input  progress
-│       ├── hooks/use-websocket.ts       # Typed WS hook (auto-reconnect)
-│       ├── store/  auth-store  dashboard-store  (Zustand)
-│       ├── lib/api.ts                   # Axios — all 17 endpoints typed
-│       ├── types/index.ts               # Shared TS types (mirrors Pydantic)
-│       └── middleware.ts                # Auth redirect middleware
+│   └── src/app/
+│       ├── (auth)/login/  register/
+│       ├── teacher/dashboard/  input/  query/  students/
+│       ├── student/dashboard/  quiz/
+│       └── admin/dashboard/
 │
 ├── scripts/
-│   ├── seed_postgres.sql                # Demo users + sample events/tickets
-│   └── seed_neo4j.cypher               # 8 KCs + prerequisite relationships
+│   ├── seed_postgres.sql          # Demo users + events + tickets
+│   └── seed_neo4j.cypher          # 8 KCs + prerequisite chains + 5 students
 │
-├── docker-compose.yml                   # Full stack: API + UI + PG + Neo4j
-├── .env.example                         # Safe env template (no real secrets)
-└── .gitignore
+├── docs/
+│   ├── eraser-architecture-layman.md
+│   ├── eraser-architecture-technical.md
+│   ├── presentation-complete.md   # 23-slide PPT script
+│   └── technical-deep-dive-defense.md  # Judge Q&A preparation
+│
+└── docker-compose.yml             # Optional full-stack containers
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Full Tech Stack
 
-### Prerequisites
-| Tool | Version | Notes |
-|------|---------|-------|
-| Python | 3.11+ | 3.13 recommended |
-| Node.js | 18+ | 20 LTS recommended |
-| PostgreSQL | 16 | or via Docker |
-| Neo4j | 5 Community | or via Docker |
-| Docker + Compose | 24+ | Optional (easiest path) |
-| Gemini API Key | — | [Get free key →](https://aistudio.google.com/app/apikey) |
-
-### Option A — Docker Compose (Full Stack)
-
-```bash
-git clone https://github.com/SanjayS-007/sahayak360-mvp.git
-cd sahayak360-mvp
-
-# .env is pre-filled for local dev — only update GEMINI_API_KEY
-# backend/.env  →  GEMINI_API_KEY=your_key_here
-
-docker-compose up --build
-
-# First run: seed databases
-docker-compose exec backend python -c "
-import asyncio; from db.postgres import init_db; asyncio.run(init_db())"
-docker-compose exec db psql -U sahayak -d sahayak360 -f /scripts/seed_postgres.sql
-# Neo4j Browser → http://localhost:7474 → run scripts/seed_neo4j.cypher
-```
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8000 |
-| Swagger UI | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
-| Neo4j Browser | http://localhost:7474 |
-
-### Option B — Manual (Development)
-
-**Backend:**
-```bash
-cd backend
-python -m venv venv
-# Windows: .\venv\Scripts\activate
-# Mac/Linux: source venv/bin/activate
-
-pip install uv
-uv pip install -r requirements.txt
-
-# Create PostgreSQL DB
-psql -U postgres -c "CREATE USER sahayak WITH PASSWORD 'sahayak_dev_2026';"
-psql -U postgres -c "CREATE DATABASE sahayak360 OWNER sahayak;"
-python -c "import asyncio; from db.postgres import init_db; asyncio.run(init_db())"
-psql -U sahayak -d sahayak360 -f ../scripts/seed_postgres.sql
-
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm install
-cp .env.local.example .env.local   # default: NEXT_PUBLIC_API_URL=http://localhost:8000
-npm run dev          # → http://localhost:3000
-```
-
-**Neo4j seed:**
-```
-Open http://localhost:7474 → authenticate → paste + run scripts/seed_neo4j.cypher
-```
-
----
-
-## 👥 Team Setup & Onboarding
-
-> **Private repo** — `backend/.env` is committed with dev credentials so the team can start in minutes.
-
-### 5-Minute New Member Setup
-
-```bash
-# 1. Clone
-git clone https://github.com/SanjayS-007/sahayak360-mvp.git
-cd sahayak360-mvp
-
-# 2. Start databases (Docker)
-docker-compose up -d db neo4j
-
-# 3. Backend
-cd backend
-python -m venv venv && .\venv\Scripts\activate    # Windows
-# source venv/bin/activate                         # Mac/Linux
-pip install uv && uv pip install -r requirements.txt
-
-python -c "import asyncio; from db.postgres import init_db; asyncio.run(init_db())"
-psql -U sahayak -d sahayak360 -f ../scripts/seed_postgres.sql
-
-uvicorn main:app --reload --port 8000
-
-# 4. Frontend (new terminal)
-cd frontend && npm install && npm run dev
-
-# 5. Verify
-curl http://localhost:8000/health
-# → {"status":"healthy","service":"sahayak-360-api","version":"1.0.0"}
-
-# 6. Run pipeline tests
-cd backend && python test_pipeline.py
-# → 8/8 PASS
-```
-
-### Only Thing You Must Change
-
-Open `backend/.env` and replace:
-```env
-GEMINI_API_KEY=test_key_placeholder
-```
-with your own key from https://aistudio.google.com/app/apikey
-
-Everything else works out of the box locally.
-
----
-
-## ⚙️ Environment Variables
-
-### `backend/.env` (committed — dev defaults pre-filled)
-
-| Variable | Dev Default | Description |
-|----------|-------------|-------------|
-| `DATABASE_URL` | `postgresql+asyncpg://sahayak:sahayak_dev_2026@localhost:5432/sahayak360` | Async PostgreSQL DSN |
-| `NEO4J_URI` | `bolt://localhost:7687` | Neo4j bolt URI |
-| `NEO4J_USER` | `neo4j` | Neo4j username |
-| `NEO4J_PASSWORD` | `neo4j_dev_2026` | Neo4j password |
-| `GEMINI_API_KEY` | `test_key_placeholder` | **Replace with your key** |
-| `JWT_SECRET` | `dev_secret_key_2026` | JWT signing secret (change in prod) |
-| `JWT_ALGORITHM` | `HS256` | JWT algorithm |
-| `JWT_EXPIRY_MINUTES` | `1440` | Token lifetime (24 hours) |
-| `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated allowed origins |
-
-### `frontend/.env.local`
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend base URL |
-
-> **Production checklist:**
-> - [ ] Generate strong `JWT_SECRET`: `openssl rand -hex 32`
-> - [ ] Set `CORS_ORIGINS` to your production domain
-> - [ ] Use a managed PostgreSQL (RDS, Supabase, Neon)
-> - [ ] Use managed Neo4j Aura or self-hosted with auth enabled
-> - [ ] Rotate Gemini API key and restrict to your IP/domain
-
----
-
-## 👤 Demo Accounts (after seeding)
-
-| Role | Email | Password | Can Access |
-|------|-------|----------|-----------|
-| Admin | `admin@sahayak.edu` | `demo1234` | `/admin/dashboard` |
-| Teacher | `teacher@sahayak.edu` | `demo1234` | All `/teacher/*` routes |
-| Student | `student@sahayak.edu` | `demo1234` | `/student/*` + quiz WS |
-
----
-
-## 📡 API Reference
-
-Full interactive docs at **http://localhost:8000/docs** (Swagger UI) and **http://localhost:8000/redoc**
-
-### Auth
-| Method | Endpoint | Body | Description |
-|--------|----------|------|-------------|
-| `POST` | `/api/auth/register` | `{email, password, name, role}` | Register new user |
-| `POST` | `/api/auth/login` | `{email, password}` | Returns JWT bearer token |
-| `GET` | `/api/auth/me` | — | Current user profile |
-
-### Ingestion
-| Method | Endpoint | Auth | Body | Description |
-|--------|----------|------|------|-------------|
-| `POST` | `/api/ingest/structured` | Bearer | `StructuredIngestRequest` | Fast-lane JSON |
-| `POST` | `/api/ingest/freetext` | Bearer | `{text: string}` | NL → pipeline |
-| `POST` | `/api/ingest/vision` | Bearer | `multipart/form-data` (image) | Scan → pipeline |
-
-**`StructuredIngestRequest` schema:**
-```json
-{
-  "student_id": "STU001",
-  "class_section": "8-A",
-  "assessment_type": "formative",
-  "channel": "swipe_pwa",
-  "scores": [
-    {
-      "question_id": "Q1",
-      "knowledge_component_id": "KC_FRACTIONS",
-      "knowledge_component_name": "Fractions",
-      "obtained_marks": 3,
-      "max_marks": 10
-    }
-  ]
-}
-```
-
-### Dashboard
-| Method | Endpoint | Auth | Params | Description |
-|--------|----------|------|--------|-------------|
-| `GET` | `/api/dashboard/teacher/overview` | Bearer (teacher) | `?class_section=8-A` | Class risk summary |
-| `GET` | `/api/dashboard/teacher/students` | Bearer (teacher) | `?class_section=8-A` | Student roster + mastery |
-| `GET` | `/api/dashboard/student/mastery` | Bearer (student) | — | Personal KC mastery |
-| `GET` | `/api/dashboard/admin/overview` | Bearer (admin) | — | Institution stats |
-
-### Quiz (MCP)
-| Method | Endpoint | Auth | Body | Description |
-|--------|----------|------|------|-------------|
-| `POST` | `/api/quiz/dispatch` | Bearer (teacher) | `{student_id, kc_ids[]}` | Generate + dispatch |
-| `POST` | `/api/quiz/submit` | Bearer (student) | `{quiz_id, answers[]}` | Submit → mastery update |
-| `WS` | `/ws/student/{student_id}` | Bearer (query param) | — | Real-time quiz channel |
-
-### Query (NL-to-Cypher)
-| Method | Endpoint | Auth | Body | Description |
-|--------|----------|------|------|-------------|
-| `POST` | `/api/query/ask` | Bearer (teacher) | `{question: string}` | NL → Cypher → answer |
-| `GET` | `/api/query/student/{id}/insights` | Bearer | — | AI student insights |
-| `GET` | `/api/query/class/{section}/patterns` | Bearer | — | Class gap patterns |
-
-### System
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | Swagger UI |
-| `GET` | `/redoc` | ReDoc |
-
----
-
-## 🔬 10-Step Pipeline Deep Dive
-
-### Step 1 — RehydrationGovernor
-Inspects `channel` on the inbound event. `swipe_pwa` / `api_direct` → **Fast lane** (skip LLM). `freetext` / `voice` / `vision` → **Slow lane** (Gemini parse → AST).
-
-### Step 2 — PandasValidator
-Builds a DataFrame from `scores[]`. Checks:
-- `obtained_marks <= max_marks` for every row
-- `total_obtained_marks == sum(score.obtained_marks)`
-- No null KC IDs
-Raises `ValidationError` with structured diff on failure.
-
-### Step 3 — ThresholdEvaluator
-```
-pct  = obtained_marks / max_marks
-gap  = True  if pct < GAP_THRESHOLD (default 0.60)
-```
-
-### Step 4 — MasteryUpdater (BKT)
-```
-BKT Parameters:  P_LEARN=0.10  P_GUESS=0.20  P_SLIP=0.10
-
-is_correct = (obtained_marks / max_marks) >= 0.60
-
-if is_correct:
-    posterior = P_KNOWN*(1-P_SLIP) / [P_KNOWN*(1-P_SLIP) + (1-P_KNOWN)*P_GUESS]
-else:
-    posterior = P_KNOWN*P_SLIP / [P_KNOWN*P_SLIP + (1-P_KNOWN)*(1-P_GUESS)]
-
-new_mastery = posterior + (1 - posterior) * P_LEARN
-```
-Mastery threshold: `> 0.80 = mastered`
-
-### Step 5 — RiskScorer (ABC)
-```
-Academic  (0.50) = gap_count / total_kcs * 100
-Cognitive (0.25) = prerequisite_gap_depth * 10
-Behavioral(0.25) = 0  [Phase 2: attendance/submission rate]
-Composite = 0.50*A + 0.25*B + 0.25*C
-
-Tiers:  LOW <35  |  MODERATE 35-54  |  HIGH 55-74  |  CRITICAL ≥75
-```
-
-### Step 6 — MTSSEngine
-Maps tier to a structured intervention plan dict with concrete action lists (practice activities, referral flags, parent notification flags).
-
-### Step 7 — TicketLifecycle
-Creates `InterventionTicket` for each HIGH/CRITICAL gap:
-```
-States: OPEN → IN_PROGRESS → RESOLVED → CLOSED
-                           ↘ ESCALATED
-```
-
-### Steps 8–10 — Persistence
-```
-8:  INSERT INTO assessment_events (event + scores JSON)
-9:  UPSERT INTO mastery_records (student_id, kc_id) SET mastery = new_value
-10: MERGE (s:Student)-[:MASTERED {level}]->(kc:KnowledgeComponent)
-    + walk prerequisite chain to flag upstream KCs as at-risk
-```
-
----
-
-## 🗄️ Data Models
-
-### PostgreSQL (SQLAlchemy Async ORM — `backend/db/models.py`)
-```
-users                   assessment_events
-├── id (UUID PK)        ├── id (UUID PK)
-├── email (UNIQUE)      ├── student_id
-├── name                ├── class_section
-├── role (ENUM)         ├── assessment_type (ENUM)
-├── class_section       ├── channel
-└── hashed_password     ├── raw_scores (JSONB)
-                        ├── gap_results (JSONB)
-mastery_records         ├── risk_score (FLOAT)
-├── id (UUID PK)        ├── risk_tier
-├── student_id          └── created_at
-├── kc_id
-├── kc_name             tickets
-├── mastery (FLOAT)     ├── id (UUID PK)
-└── updated_at          ├── student_id / kc_id / tier
-                        ├── state (OPEN→RESOLVED)
-                        ├── actions (JSONB)
-                        └── created_at
-```
-
-### Neo4j Graph Schema
-```
-Nodes:
-  (:KnowledgeComponent {id, name, subject, grade})
-  (:Student {id, name, class_section})
-
-Relationships:
-  (:KnowledgeComponent)-[:PREREQUISITE_OF]->(:KnowledgeComponent)
-  (:Student)-[:MASTERED {level: float, updated_at}]->(:KnowledgeComponent)
-  (:Student)-[:STRUGGLING_WITH {since: datetime}]->(:KnowledgeComponent)
-```
-
-### AST Schema (`backend/core/ast_schema.py`)
-```python
-AssessmentEventAST:
-  event_id: str            # "DEPT-MATH-8A-20260603-001"
-  student_id / class_section / assessment_type / channel
-  scores: List[ScoreItem]
-  metadata: EventMetadata
-
-ScoreItem:
-  question_id / knowledge_component_id / knowledge_component_name
-  obtained_marks / max_marks
-
-EventMetadata:
-  teacher_id / subject / total_marks / obtained_marks / duration_minutes
-```
-
----
-
-## 🧪 Running Tests
-
-```bash
-cd backend
-python test_pipeline.py
-```
-
-```
-=== SAHAYAK 360 — Pipeline Integration Tests ===
-
-TEST 1: StructuredIngestRequest validation ... PASS
-TEST 2: AssessmentEventAST construction ..... PASS
-TEST 3: Pandas cross-field validation ....... PASS
-TEST 4: Threshold evaluator ................. PASS
-TEST 5: Bayesian Knowledge Tracing (BKT) .... PASS
-TEST 6: ABC Risk scorer ..................... PASS
-TEST 7: MTSS engine ......................... PASS
-TEST 8: Ticket lifecycle state machine ...... PASS
-
-=== 8/8 TESTS PASSED ===
-```
-
-| Test | Module | Key Assertion |
-|------|--------|---------------|
-| 1 | `ast_schema.py` | `StructuredIngestRequest` validates correctly |
-| 2 | `ast_schema.py` | `AssessmentEventAST` constructs from scores |
-| 3 | `pandas_validator.py` | Cross-field math passes; bad data raises |
-| 4 | `threshold_evaluator.py` | 30% score → gap detected |
-| 5 | `mastery_updater.py` | BKT update increases mastery on correct answer |
-| 6 | `risk_scorer.py` | ABC composite maps to correct tier |
-| 7 | `mtss_engine.py` | Tier 3 plan has `specialist_referral: true` |
-| 8 | `ticket_lifecycle.py` | OPEN → IN_PROGRESS transition is valid |
-
-No database or Gemini API key needed to run these tests.
-
----
-
-## 🛠️ Tech Stack
-
-### Backend
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Framework | FastAPI | 0.111+ |
-| Server | Uvicorn (ASGI) | 0.30+ |
+| Backend framework | FastAPI | 0.111+ |
+| ASGI server | Uvicorn | 0.30+ |
 | Language | Python | 3.13 |
 | Validation | Pydantic V2 + pydantic-settings | 2.7+ |
 | ORM | SQLAlchemy async | 2.0+ |
-| PostgreSQL driver | asyncpg | 0.31 |
-| Graph DB | Neo4j async driver | 5.22+ |
+| Relational DB driver | asyncpg | 0.29+ |
+| Graph DB driver | Neo4j async | 5.22+ |
 | AI / LLM | Google Generative AI (Gemini 1.5 Flash) | 0.7+ |
-| Vision | OpenCV headless + Pillow | 4.10+ / 10.3+ |
+| Computer Vision | OpenCV headless + Pillow | 4.10+ |
 | Data processing | Pandas + NumPy | 2.2+ / 1.26+ |
-| Auth | python-jose + passlib (bcrypt) | 3.3+ / 1.7+ |
-| Real-time | WebSockets (FastAPI native) | 12+ |
-
-### Frontend
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Framework | Next.js (App Router) | 14.2+ |
-| Language | TypeScript | 5.5 |
-| Styling | Tailwind CSS | 3.4 |
-| UI Components | shadcn/ui (Radix + CVA) | — |
+| Auth | python-jose + passlib (bcrypt) | — |
+| Frontend framework | Next.js 14 (App Router) | 14.2+ |
+| Frontend language | TypeScript | 5.5 |
+| Styling | Tailwind CSS + shadcn/ui | 3.4 |
 | Charts | Recharts | 2.12 |
 | State | Zustand | 4.5 |
-| HTTP Client | Axios | 1.7 |
-| i18n | next-intl | 3.15 |
-| Animations | Framer Motion | 11 |
-| Notifications | Sonner | 1.5 |
-
-### Infrastructure
-| Layer | Technology |
-|-------|-----------|
-| Containers | Docker + Docker Compose |
-| PostgreSQL | postgres:16-alpine |
-| Graph DB | neo4j:5-community |
-| Package mgr | uv (Python), npm (Node) |
-
----
-
-## 🔄 Development Workflow
-
-```bash
-# Feature branch workflow
-git checkout -b feature/your-feature-name
-
-# Always test before committing
-cd backend && python test_pipeline.py
-
-# Conventional Commits
-git commit -m "feat: add prerequisite gap depth to cognitive risk"
-git commit -m "fix: BKT prior clamped to [0.01, 0.99]"
-git commit -m "docs: update API reference"
-git commit -m "refactor: extract threshold config to settings"
-
-git push origin feature/your-feature-name
-# → open Pull Request targeting main
-```
-
-| Branch | Purpose |
-|--------|---------|
-| `main` | Stable, deployable |
-| `feature/*` | New features |
-| `fix/*` | Bug fixes |
-| `chore/*` | Tooling, deps, CI |
+| HTTP client | Axios | 1.7 |
+| Containers | Docker + Docker Compose | optional |
 
 ---
 
 ## 🚧 Roadmap
 
-- [ ] Behavioral risk component (attendance + submission rate data)
+- [ ] Behavioral risk from attendance + submission rate
 - [ ] SMS / WhatsApp parent alerts on CRITICAL tier
-- [ ] Multi-language UI — Hindi, Tamil, Telugu (next-intl slots ready)
+- [ ] Hindi, Tamil, Telugu UI (next-intl slots already wired)
 - [ ] Offline PWA sync queue for low-connectivity schools
-- [ ] Google Classroom / Moodle event import
-- [ ] Longitudinal mastery trend graphs per student
-- [ ] Neo4j betweenness centrality for critical KC detection
+- [ ] Google Classroom / Moodle import
+- [ ] Longitudinal mastery trend graphs
 - [ ] Teacher mobile app (React Native)
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/your-feature`
-3. Run tests: `cd backend && python test_pipeline.py`
-4. Commit (Conventional Commits): `git commit -m 'feat: description'`
-5. Push + open a Pull Request targeting `main`
 
 ---
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE)
 
 ---
 
 <div align="center">
 
-Built with ❤️ for educators and students everywhere
+Built for educators and students in India
 
 **Sahayak** (सहायक) means *helper* in Hindi
 
