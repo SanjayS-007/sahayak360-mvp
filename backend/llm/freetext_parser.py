@@ -40,7 +40,7 @@ async def parse_freetext_to_ast(
 
     try:
         parsed = await generate_json(prompt)
-    except (ValueError, RuntimeError) as e:
+    except Exception as e:
         logger.warning(f"Freetext parsing failed, using minimal AST: {e}")
         return _build_minimal_ast(teacher_id, class_section, subject, raw_text)
 
