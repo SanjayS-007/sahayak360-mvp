@@ -3,12 +3,6 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "installCommand": "npm install",
-  "env": {
-    "NEXT_PUBLIC_API_URL": {
-      "description": "Backend API URL (Render service URL)",
-      "required": true
-    }
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
