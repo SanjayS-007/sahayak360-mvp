@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from config import settings
+
 
 class MasteryLevel(str, Enum):
     NOT_ATTEMPTED = "not_attempted"
@@ -143,7 +145,7 @@ ORDER BY depth DESC
 
 async def upsert_mastery_neo4j(driver, student_id: str, node: KnowledgeNode):
     """Update mastery in Neo4j graph."""
-    async with driver.session() as session:
+    async with driver.session(database=settings.NEO4J_DATABASE) as session:
         await session.run(
             CYPHER_UPSERT_MASTERY,
             student_id=student_id,
@@ -156,7 +158,7 @@ async def upsert_mastery_neo4j(driver, student_id: str, node: KnowledgeNode):
 
 async def get_student_gaps(driver, student_id: str, threshold: float = 0.65) -> list[dict]:
     """Get all KCs below mastery threshold for a student."""
-    async with driver.session() as session:
+    async with driver.session(database=settings.NEO4J_DATABASE) as session:
         result = await session.run(
             CYPHER_GET_STUDENT_GAPS,
             student_id=student_id,
@@ -167,7 +169,7 @@ async def get_student_gaps(driver, student_id: str, threshold: float = 0.65) -> 
 
 async def get_prerequisite_chain(driver, kc_id: str) -> list[dict]:
     """Get upstream prerequisite chain for a KC."""
-    async with driver.session() as session:
+    async with driver.session(database=settings.NEO4J_DATABASE) as session:
         result = await session.run(
             CYPHER_GET_PREREQUISITE_CHAIN,
             kc_id=kc_id,

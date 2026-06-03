@@ -243,7 +243,8 @@ async def _get_prerequisite_gaps(driver, kc_id: str) -> list[str]:
 async def _sync_mastery_to_neo4j(driver, student_id: str, updates: list[MasteryUpdate]):
     """Sync mastery updates to Neo4j knowledge graph."""
     from core.knowledge_dag import CYPHER_UPSERT_MASTERY
-    async with driver.session() as session:
+    from config import settings
+    async with driver.session(database=settings.NEO4J_DATABASE) as session:
         for update in updates:
             await session.run(
                 CYPHER_UPSERT_MASTERY,

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from llm.gemini_client import generate_json
+from config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ async def execute_nl_query(
     params = query_data["params"]
 
     try:
-        async with neo4j_driver.session() as session:
+        async with neo4j_driver.session(database=settings.NEO4J_DATABASE) as session:
             result = await session.run(cypher, **params)
             records = [record.data() async for record in result]
     except Exception as e:

@@ -17,6 +17,7 @@ async def get_neo4j_driver():
         _driver = AsyncGraphDatabase.driver(
             settings.NEO4J_URI,
             auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
+            database=settings.NEO4J_DATABASE,
         )
     return _driver
 
@@ -32,7 +33,7 @@ async def close_neo4j():
 async def verify_neo4j_connectivity():
     """Verify Neo4j is reachable."""
     driver = await get_neo4j_driver()
-    async with driver.session() as session:
+    async with driver.session(database=settings.NEO4J_DATABASE) as session:
         result = await session.run("RETURN 1 AS ok")
         record = await result.single()
         return record["ok"] == 1
@@ -41,7 +42,7 @@ async def verify_neo4j_connectivity():
 async def init_neo4j_schema():
     """Create indexes and constraints on first run."""
     driver = await get_neo4j_driver()
-    async with driver.session() as session:
+    async with driver.session(database=settings.NEO4J_DATABASE) as session:
         # Constraints
         await session.run(
             "CREATE CONSTRAINT student_id IF NOT EXISTS "
