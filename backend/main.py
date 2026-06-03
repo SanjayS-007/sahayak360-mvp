@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
 from typing import List
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from config import settings
 from db.postgres import init_db, close_db, engine
@@ -94,6 +95,13 @@ app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"]
 app.include_router(query_router, prefix="/api/query", tags=["AI Query"])
 app.include_router(quiz_router, prefix="/api/quiz", tags=["Quiz"])
 app.include_router(websocket_router, prefix="/api/ws", tags=["WebSocket"])
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    import logging, traceback
+    logging.getLogger("sahayak360").error(f"Unhandled: {exc}\n{traceback.format_exc()}")
+    return JSONResponse(status_code=500, content={"detail": str(exc), "type": type(exc).__name__})
 
 
 @app.get("/", tags=["Health"])
