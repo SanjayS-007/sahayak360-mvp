@@ -97,5 +97,10 @@ app.include_router(websocket_router, prefix="/api/ws", tags=["WebSocket"])
 
 
 @app.get("/", tags=["Health"])
+async def root():
+    return {"status": "healthy", "service": "sahayak-360-api", "version": "1.0.0"}
+
+
+@app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "healthy", "service": "sahayak-360-api", "version": "1.0.0"}
