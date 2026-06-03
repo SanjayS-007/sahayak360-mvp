@@ -65,9 +65,9 @@ async def natural_language_query(
             confidence=0.0,
         )
     except Exception as e:
-        logger.error(f"NL query failed: {e}")
+        logger.error(f"NL query failed: {type(e).__name__}: {e}")
         return QueryResponse(
-            answer="An error occurred processing your query. Please rephrase.",
+            answer=f"Query processing error: {str(e)[:200]}",
             confidence=0.0,
         )
 

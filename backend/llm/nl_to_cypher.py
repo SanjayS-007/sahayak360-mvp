@@ -93,10 +93,10 @@ async def execute_nl_query(
 
     try:
         async with neo4j_driver.session(database=settings.NEO4J_DATABASE) as session:
-            result = await session.run(cypher, **params)
+            result = await session.run(cypher, params)
             records = [record.data() async for record in result]
     except Exception as e:
-        logger.error(f"Cypher execution failed: {e}")
+        logger.error(f"Cypher execution failed: {e} | Cypher: {cypher} | Params: {params}")
         raise ValueError(f"Query execution failed: {e}")
 
     # Step 3: Format response
