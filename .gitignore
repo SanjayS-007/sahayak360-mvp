@@ -20,7 +20,8 @@ out/
 .turbo/
 *.tsbuildinfo
 
-# Environment — .env is tracked (private repo, team use only)
+# Environment
+backend/.env
 .env.local
 .env.*.local
 
