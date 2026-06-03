@@ -1,0 +1,49 @@
+{
+  "common": {
+    "appName": "Sahayak 360",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "email": "Email Address",
+    "password": "Password",
+    "fullName": "Full Name",
+    "role": "Role",
+    "loginTitle": "Welcome to Sahayak 360",
+    "loginSubtitle": "Sign in to access your educational analytics dashboard",
+    "registerTitle": "Join Sahayak 360",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "dashboard": {
+    "overview": "Dashboard Overview",
+    "classAvg": "Class Average Mastery",
+    "totalStudents": "Total Students",
+    "atRisk": "At-Risk Students",
+    "openTickets": "Open Tickets",
+    "recentEvents": "Recent Assessments",
+    "strugglingKCs": "Struggling Knowledge Components"
+  },
+  "ingest": {
+    "title": "Input Assessment Data",
+    "structured": "Structured Input",
+    "freetext": "Natural Language",
+    "vision": "Scan Image",
+    "success": "Assessment data processed successfully",
+    "placeholder": "e.g. Ravi scored 8/10 in fractions test..."
+  },
+  "quiz": {
+    "title": "Assessment Quiz",
+    "question": "Question",
+    "submit": "Submit Answers",
+    "score": "Your Score",
+    "timeLeft": "Time Remaining"
+  }
+}
