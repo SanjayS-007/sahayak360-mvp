@@ -238,11 +238,19 @@ def main():
                 "items": items,
             }
 
-            r = S.post(f"{BASE}/api/ingest/structured", json=payload, headers=headers, timeout=30)
-            if r.status_code == 200:
-                success += 1
-            else:
-                print(f"  ✗ {student_id} W{week+1}: {r.status_code} {r.text[:80]}")
+            for attempt in range(3):
+                try:
+                    r = S.post(f"{BASE}/api/ingest/structured", json=payload, headers=headers, timeout=120)
+                    if r.status_code == 200:
+                        success += 1
+                    else:
+                        print(f"  ✗ {student_id} W{week+1}: {r.status_code} {r.text[:80]}")
+                    break
+                except Exception as e:
+                    if attempt < 2:
+                        import time; time.sleep(5)
+                    else:
+                        print(f"  ✗ {student_id} W{week+1}: {e}")
 
     print(f"  ✓ Ingested {success} assessment events")
 

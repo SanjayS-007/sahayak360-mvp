@@ -394,6 +394,77 @@ async def reset_demo_data(
     }
 
 
+@router.post("/admin/bulk-seed")
+async def bulk_seed_mastery(
+    payload: dict,
+    user: User = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Bulk-insert mastery records and assessment events. Admin only.
+    
+    Payload: { "records": [ {student_id, kc_id, kc_name, mastery_level, score, subject} ] }
+    """
+    from datetime import datetime, timedelta
+    import random
+
+    records = payload.get("records", [])
+    inserted_mastery = 0
+    inserted_events = 0
+
+    # Group by student for assessment events
+    student_records: dict = {}
+    for rec in records:
+        sid = rec["student_id"]
+        if sid not in student_records:
+            student_records[sid] = []
+        student_records[sid].append(rec)
+
+        # Insert mastery record
+        mr = MasteryRecord(
+            student_id=sid,
+            kc_id=rec["kc_id"],
+            kc_name=rec.get("kc_name", rec["kc_id"]),
+            mastery_level=rec.get("mastery_level", "developing"),
+            score=rec.get("score", 0.5),
+            subject=rec.get("subject", "mathematics"),
+        )
+        db.add(mr)
+        inserted_mastery += 1
+
+    # Create assessment events per student (3 per student for history)
+    now = datetime.utcnow()
+    for sid, recs in student_records.items():
+        avg_score = sum(r.get("score", 0.5) for r in recs) / len(recs)
+        # Look up student's class_section
+        stu = await db.execute(select(User).where(User.user_id == sid))
+        student = stu.scalar_one_or_none()
+        class_section = student.class_section if student else "9-A"
+
+        for week in range(3):
+            random.seed(hash(f"{sid}-{week}"))
+            variance = random.uniform(-0.05, 0.05)
+            score = max(0.0, min(1.0, avg_score + variance + week * 0.02))
+
+            evt = AssessmentEvent(
+                student_id=sid,
+                class_section=class_section,
+                subject=recs[0].get("subject", "mathematics"),
+                assessment_type="formative",
+                score=round(score, 3),
+                max_score=1.0,
+                assessed_at=now - timedelta(days=(2 - week) * 7),
+            )
+            db.add(evt)
+            inserted_events += 1
+
+    await db.commit()
+
+    return {
+        "inserted_mastery_records": inserted_mastery,
+        "inserted_assessment_events": inserted_events,
+    }
+
+
 @router.get("/teacher/knowledge-graph")
 async def teacher_knowledge_graph(
     class_section: str = Query(...),
