@@ -18,12 +18,12 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (user) loadDashboard();
+  }, [user?.class_section]);
 
   async function loadDashboard() {
     try {
-      const classSection = user?.class_section || "8-A";
+      const classSection = user?.class_section || "9-A";
       const { data } = await dashboardApi.teacherOverview(classSection);
       setAnalytics(data);
     } catch {
