@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,11 +19,7 @@ export default function TeacherDashboard() {
   const [patterns, setPatterns] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) loadDashboard();
-  }, [user?.class_section]);
-
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     try {
       const classSection = user?.class_section || "9-A";
       const { data } = await dashboardApi.teacherOverview(classSection);
@@ -35,7 +31,11 @@ export default function TeacherDashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user?.class_section]);
+
+  useEffect(() => {
+    if (user) loadDashboard();
+  }, [user, loadDashboard]);
 
   if (loading) {
     return (

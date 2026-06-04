@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
@@ -51,11 +51,7 @@ export default function TeacherAlertsPage() {
   const [filter, setFilter] = useState<string>("all");
   const [dispatching, setDispatching] = useState<string>("");
 
-  useEffect(() => {
-    loadAlerts();
-  }, [user?.class_section]);
-
-  async function loadAlerts() {
+  const loadAlerts = useCallback(async () => {
     try {
       const classSection = user?.class_section || "9-A";
       const { data: alerts } = await alertsApi.getAlerts(classSection);
@@ -65,7 +61,11 @@ export default function TeacherAlertsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user?.class_section]);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts]);
 
   async function handleQuickDispatch(studentId: string, studentName: string) {
     setDispatching(studentId);

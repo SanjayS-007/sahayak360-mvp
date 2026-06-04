@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
@@ -26,11 +26,7 @@ export default function TeacherStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadStudents();
-  }, []);
-
-  async function loadStudents() {
+  const loadStudents = useCallback(async () => {
     try {
       const { data } = await dashboardApi.studentList(user?.class_section || "9-A");
       setStudents(data || []);
@@ -39,7 +35,11 @@ export default function TeacherStudentsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user?.class_section]);
+
+  useEffect(() => {
+    loadStudents();
+  }, [loadStudents]);
 
   const filtered = students.filter(
     (s) =>

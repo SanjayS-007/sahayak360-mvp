@@ -65,11 +65,7 @@ export default function KnowledgeGraphPage() {
   const settledRef = useRef(false);
   const mouseRef = useRef<{ x: number; y: number } | null>(null);
 
-  useEffect(() => {
-    loadGraph();
-  }, [user?.class_section]);
-
-  async function loadGraph() {
+  const loadGraph = useCallback(async () => {
     try {
       const { data: graphData } = await api.get("/dashboard/teacher/knowledge-graph", {
         params: { class_section: user?.class_section || "9-A" },
@@ -85,7 +81,11 @@ export default function KnowledgeGraphPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user?.class_section]);
+
+  useEffect(() => {
+    loadGraph();
+  }, [loadGraph]);
 
   const render = useCallback(() => {
     if (!data || !canvasRef.current) return;

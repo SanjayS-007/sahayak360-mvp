@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
@@ -66,29 +66,25 @@ export default function TeacherStudentDetailPage() {
   const [insightsData, setInsightsData] = useState<any>(null);
   const [dispatching, setDispatching] = useState(false);
 
-  useEffect(() => {
-    if (studentId) loadData();
-  }, [studentId]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const { data: detail } = await dashboardApi.studentDetail(studentId);
       setData(detail);
       // Load additional data in parallel (non-blocking)
-      loadEnhancedData();
+      alertsApi.getStudentRisk(studentId).then(res => setRiskData(res.data)).catch(() => {});
+      alertsApi.getStudentMTSS(studentId).then(res => setMtssData(res.data)).catch(() => {});
+      queryApi.studentInsights(studentId).then(res => setInsightsData(res.data)).catch(() => {});
     } catch {
       toast.error("Failed to load student details");
     } finally {
       setLoading(false);
     }
-  }
+  }, [studentId]);
 
-  async function loadEnhancedData() {
-    // These are fire-and-forget â€” don't block main render
-    alertsApi.getStudentRisk(studentId).then(res => setRiskData(res.data)).catch(() => {});
-    alertsApi.getStudentMTSS(studentId).then(res => setMtssData(res.data)).catch(() => {});
-    queryApi.studentInsights(studentId).then(res => setInsightsData(res.data)).catch(() => {});
-  }
+  useEffect(() => {
+    if (studentId) loadData();
+  }, [studentId, loadData]);
+
 
   async function handleDispatchQuiz(kcIds: string[]) {
     setDispatching(true);
