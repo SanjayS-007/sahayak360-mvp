@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
@@ -47,7 +47,15 @@ interface SubmitResult {
 
 type Phase = "select" | "practice" | "results";
 
-export default function PracticePage() {
+export default function PracticePageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" /></div>}>
+      <PracticePage />
+    </Suspense>
+  );
+}
+
+function PracticePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const preselectedKC = searchParams.get("kc");
