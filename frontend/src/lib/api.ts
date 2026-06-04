@@ -94,3 +94,19 @@ export const quizApi = {
     api.post("/quiz/submit", { session_id: sessionId, responses }),
   getSession: (sessionId: string) => api.get(`/quiz/${sessionId}`),
 };
+
+// --- Alerts & Interventions ---
+export const alertsApi = {
+  getAlerts: (classSection: string, subject?: string) =>
+    api.get(`/alerts/teacher?class_section=${classSection}${subject ? `&subject=${subject}` : ""}`),
+  getTickets: (params?: Record<string, string>) =>
+    api.get("/alerts/tickets", { params }),
+  getTicketStats: () =>
+    api.get("/alerts/tickets/stats"),
+  transitionTicket: (ticketId: string, data: { new_status: string; note?: string }) =>
+    api.patch(`/alerts/tickets/${ticketId}/transition`, data),
+  getStudentRisk: (studentId: string, subject?: string) =>
+    api.get(`/alerts/student-risk/${studentId}${subject ? `?subject=${subject}` : ""}`),
+  getStudentMTSS: (studentId: string, subject?: string) =>
+    api.get(`/alerts/student-mtss/${studentId}${subject ? `?subject=${subject}` : ""}`),
+};

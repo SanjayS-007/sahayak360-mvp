@@ -14,11 +14,16 @@ import {
   ClipboardList,
   Network,
   BarChart3,
+  Bell,
+  ClipboardCheck,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const teacherLinks = [
   { href: "/teacher/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/teacher/alerts", label: "Alerts", icon: Bell },
+  { href: "/teacher/interventions", label: "Interventions", icon: ClipboardCheck },
   { href: "/teacher/input", label: "Input Data", icon: Upload },
   { href: "/teacher/students", label: "Students", icon: Users },
   { href: "/teacher/knowledge-graph", label: "Knowledge Graph", icon: Network },
@@ -27,12 +32,14 @@ const teacherLinks = [
 
 const studentLinks = [
   { href: "/student/dashboard", label: "My Progress", icon: LayoutDashboard },
+  { href: "/student/goals", label: "Goals", icon: Target },
   { href: "/student/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/student/quiz", label: "Quizzes", icon: ClipboardList },
 ];
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/teachers", label: "Teachers", icon: Users },
 ];
 

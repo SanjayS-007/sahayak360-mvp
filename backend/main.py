@@ -88,6 +88,7 @@ from api.routes_dashboard import router as dashboard_router
 from api.routes_query import router as query_router
 from api.routes_quiz import router as quiz_router
 from api.routes_websocket import router as websocket_router
+from api.routes_alerts import router as alerts_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(ingest_router, prefix="/api/ingest", tags=["Data Ingestion"])
@@ -95,6 +96,7 @@ app.include_router(dashboard_router, prefix="/api/dashboard", tags=["Dashboard"]
 app.include_router(query_router, prefix="/api/query", tags=["AI Query"])
 app.include_router(quiz_router, prefix="/api/quiz", tags=["Quiz"])
 app.include_router(websocket_router, prefix="/api/ws", tags=["WebSocket"])
+app.include_router(alerts_router, prefix="/api/alerts", tags=["Alerts & Interventions"])
 
 
 @app.exception_handler(Exception)
