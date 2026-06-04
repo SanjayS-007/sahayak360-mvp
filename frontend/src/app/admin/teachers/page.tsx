@@ -26,7 +26,7 @@ export default function AdminTeachersPage() {
 
   async function loadTeachers() {
     try {
-      const { data } = await api.get("/admin/teachers");
+      const { data } = await api.get("/dashboard/admin/teachers");
       setTeachers(data || []);
     } catch {
       toast.error("Failed to load teachers");
