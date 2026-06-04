@@ -63,6 +63,17 @@ class MasteryItem(BaseModel):
     attempts: int
 
 
+class StudentMasteryResponse(BaseModel):
+    student_id: str
+    overall_mastery: float
+    trend: str
+    total_kcs: int
+    gaps: list[dict]
+    strengths: list[dict]
+    assessment_count: int
+    recent_scores: list[float]
+
+
 @router.get("/teacher/overview", response_model=ClassOverview)
 async def teacher_overview(
     class_section: str = Query(...),
@@ -254,7 +265,7 @@ async def teacher_student_list(
     return sorted(summaries, key=lambda s: s.overall_mastery)
 
 
-@router.get("/student/mastery", response_model=list[MasteryItem])
+@router.get("/student/mastery", response_model=StudentMasteryResponse)
 async def student_mastery(
     subject: str = Query(default="mathematics"),
     user: User = Depends(get_current_user),
@@ -269,16 +280,27 @@ async def student_mastery(
     )
     records = result.scalars().all()
 
-    return [
-        MasteryItem(
-            kc_id=r.kc_id,
-            kc_name=r.kc_name,
-            mastery=r.mastery,
-            mastery_level=r.mastery_level,
-            attempts=r.attempts,
-        )
-        for r in records
-    ]
+    total_kcs = len(records)
+    overall = sum(r.mastery for r in records) / total_kcs if total_kcs else 0.0
+    total_attempts = sum(r.attempts for r in records)
+
+    # Gaps: mastery < 0.4
+    gaps = [{"kc_id": r.kc_id, "kc_name": r.kc_name, "mastery": round(r.mastery, 3)}
+            for r in records if r.mastery < 0.4]
+    # Strengths: mastery >= 0.7
+    strengths = [{"kc_id": r.kc_id, "kc_name": r.kc_name, "mastery": round(r.mastery, 3)}
+                 for r in records if r.mastery >= 0.7]
+
+    return StudentMasteryResponse(
+        student_id=user.user_id,
+        overall_mastery=round(overall, 3),
+        trend="stable",
+        total_kcs=total_kcs,
+        gaps=gaps,
+        strengths=strengths,
+        assessment_count=total_attempts,
+        recent_scores=[],
+    )
 
 
 @router.get("/admin/overview")

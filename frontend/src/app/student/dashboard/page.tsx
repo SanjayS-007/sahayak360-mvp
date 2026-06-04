@@ -33,7 +33,7 @@ export default function StudentDashboard() {
 
   async function loadData() {
     try {
-      const { data: mastery } = await dashboardApi.studentMastery(user?.user_id || "");
+      const { data: mastery } = await dashboardApi.studentMastery("mathematics");
       setData(mastery);
     } catch {
       toast.error("Failed to load your progress");
