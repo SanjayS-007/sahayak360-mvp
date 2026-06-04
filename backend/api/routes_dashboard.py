@@ -52,6 +52,7 @@ class StudentSummary(BaseModel):
     overall_mastery: float
     gaps_count: int
     risk_tier: str
+    trend: str = "stable"
     last_assessment: str | None = None
 
 
@@ -462,6 +463,184 @@ async def bulk_seed_mastery(
     return {
         "inserted_mastery_records": inserted_mastery,
         "inserted_assessment_events": inserted_events,
+    }
+
+
+@router.get("/teacher/student-detail/{student_id}")
+async def teacher_student_detail(
+    student_id: str,
+    subject: str = Query(default="mathematics"),
+    user: User = Depends(require_role("teacher", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Detailed student analytics for teacher view — radar data, KC breakdown, history."""
+    # Get student info
+    stu_result = await db.execute(select(User).where(User.user_id == student_id))
+    student = stu_result.scalar_one_or_none()
+    if not student:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    # Get all mastery records
+    mastery_result = await db.execute(
+        select(MasteryRecord).where(
+            MasteryRecord.student_id == student_id,
+            MasteryRecord.subject == subject,
+        )
+    )
+    records = mastery_result.scalars().all()
+
+    # Build radar data (KC name → mastery score 0-100)
+    radar_data = []
+    for r in records:
+        radar_data.append({
+            "kc": r.kc_name or r.kc_id,
+            "mastery": round(r.mastery * 100, 1),
+            "full_mark": 100,
+        })
+
+    overall = sum(r.mastery for r in records) / len(records) if records else 0.0
+    gaps = [{"kc_id": r.kc_id, "kc_name": r.kc_name, "mastery": round(r.mastery, 3)}
+            for r in records if r.mastery < 0.4]
+    strengths = [{"kc_id": r.kc_id, "kc_name": r.kc_name, "mastery": round(r.mastery, 3)}
+                 for r in records if r.mastery >= 0.7]
+
+    # Get assessment history for timeline
+    events_result = await db.execute(
+        select(AssessmentEvent).where(
+            AssessmentEvent.student_id == student_id,
+            AssessmentEvent.subject == subject,
+        ).order_by(AssessmentEvent.created_at)
+    )
+    events = events_result.scalars().all()
+
+    timeline = []
+    for e in events:
+        score_pct = (e.total_obtained / e.max_score * 100) if e.max_score else 0
+        timeline.append({
+            "date": e.created_at.strftime("%b %d") if e.created_at else "",
+            "score": round(score_pct, 1),
+        })
+
+    # Determine risk and trend
+    if overall < 0.30:
+        risk = "critical"
+    elif overall < 0.50:
+        risk = "high"
+    elif overall < 0.65:
+        risk = "moderate"
+    else:
+        risk = "low"
+
+    # Simple trend based on last 2 events
+    if len(timeline) >= 2:
+        trend = "improving" if timeline[-1]["score"] >= timeline[-2]["score"] else "declining"
+    else:
+        trend = "stable"
+
+    return {
+        "student_id": student_id,
+        "full_name": student.full_name,
+        "class_section": student.class_section,
+        "overall_mastery": round(overall, 3),
+        "risk_tier": risk,
+        "trend": trend,
+        "assessment_count": len(events),
+        "radar_data": radar_data,
+        "gaps": gaps,
+        "strengths": strengths,
+        "timeline": timeline,
+        "kc_breakdown": [
+            {"kc_id": r.kc_id, "kc_name": r.kc_name or r.kc_id, "mastery": round(r.mastery, 3), "level": r.mastery_level}
+            for r in sorted(records, key=lambda x: x.mastery)
+        ],
+    }
+
+
+@router.get("/student/analytics")
+async def student_analytics(
+    subject: str = Query(default="mathematics"),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Detailed analytics for a student's own view — radar, timeline, domain breakdown."""
+    student_id = user.user_id
+
+    # Get all mastery records
+    mastery_result = await db.execute(
+        select(MasteryRecord).where(
+            MasteryRecord.student_id == student_id,
+            MasteryRecord.subject == subject,
+        )
+    )
+    records = mastery_result.scalars().all()
+
+    # Build radar data
+    radar_data = []
+    for r in records:
+        radar_data.append({
+            "kc": r.kc_name or r.kc_id,
+            "mastery": round(r.mastery * 100, 1),
+            "full_mark": 100,
+        })
+
+    overall = sum(r.mastery for r in records) / len(records) if records else 0.0
+
+    # Domain averages (group by prefix)
+    domain_map = {"ALG": "Algebra", "GEO": "Geometry", "STAT": "Statistics", "TRIG": "Trigonometry"}
+    domain_scores: dict = {}
+    for r in records:
+        prefix = r.kc_id.split("-")[0] if r.kc_id else "OTHER"
+        domain = domain_map.get(prefix, prefix)
+        if domain not in domain_scores:
+            domain_scores[domain] = []
+        domain_scores[domain].append(r.mastery)
+
+    domains = [
+        {"domain": d, "mastery": round(sum(scores)/len(scores)*100, 1), "kc_count": len(scores)}
+        for d, scores in domain_scores.items()
+    ]
+
+    # Assessment timeline
+    events_result = await db.execute(
+        select(AssessmentEvent).where(
+            AssessmentEvent.student_id == student_id,
+            AssessmentEvent.subject == subject,
+        ).order_by(AssessmentEvent.created_at)
+    )
+    events = events_result.scalars().all()
+
+    timeline = []
+    for e in events:
+        score_pct = (e.total_obtained / e.max_score * 100) if e.max_score else 0
+        timeline.append({
+            "date": e.created_at.strftime("%b %d") if e.created_at else "",
+            "score": round(score_pct, 1),
+        })
+
+    # Trend
+    if len(timeline) >= 2:
+        trend = "improving" if timeline[-1]["score"] >= timeline[-2]["score"] else "declining"
+    else:
+        trend = "stable"
+
+    # Gaps & Strengths
+    gaps = [{"kc_id": r.kc_id, "kc_name": r.kc_name, "mastery": round(r.mastery, 3)}
+            for r in records if r.mastery < 0.4]
+    strengths = [{"kc_id": r.kc_id, "kc_name": r.kc_name, "mastery": round(r.mastery, 3)}
+                 for r in records if r.mastery >= 0.7]
+
+    return {
+        "student_id": student_id,
+        "full_name": user.full_name,
+        "overall_mastery": round(overall, 3),
+        "trend": trend,
+        "assessment_count": len(events),
+        "radar_data": radar_data,
+        "domains": domains,
+        "gaps": gaps,
+        "strengths": strengths,
+        "timeline": timeline,
     }
 
 

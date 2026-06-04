@@ -13,6 +13,7 @@ import {
   GraduationCap,
   ClipboardList,
   Network,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ const teacherLinks = [
 
 const studentLinks = [
   { href: "/student/dashboard", label: "My Progress", icon: LayoutDashboard },
+  { href: "/student/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/student/quiz", label: "Quizzes", icon: ClipboardList },
 ];
 

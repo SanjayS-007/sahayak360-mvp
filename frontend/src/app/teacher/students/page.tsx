@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { dashboardApi, queryApi } from "@/lib/api";
+import { dashboardApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
-import { formatPercentage, getRiskBadgeColor } from "@/lib/utils";
-import { Search, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import type { StudentProfile } from "@/types";
+import { getRiskBadgeColor } from "@/lib/utils";
+import { Search, TrendingUp, TrendingDown, Minus, ChevronRight } from "lucide-react";
 
 interface StudentSummary {
   student_id: string;
@@ -23,8 +21,8 @@ interface StudentSummary {
 
 export default function TeacherStudentsPage() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [students, setStudents] = useState<StudentSummary[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -43,15 +41,6 @@ export default function TeacherStudentsPage() {
     }
   }
 
-  async function selectStudent(studentId: string) {
-    try {
-      const { data } = await queryApi.studentInsights(studentId);
-      setSelectedStudent(data);
-    } catch {
-      toast.error("Failed to load student details");
-    }
-  }
-
   const filtered = students.filter(
     (s) =>
       s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -63,106 +52,74 @@ export default function TeacherStudentsPage() {
       <div className="space-y-6">
         <h2 className="text-2xl font-bold text-gray-900">Students</h2>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Student List */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search students..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-
-            {loading ? (
-              <div className="flex h-32 items-center justify-center">
-                <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filtered.map((student) => (
-                  <button
-                    key={student.student_id}
-                    onClick={() => selectStudent(student.student_id)}
-                    className={`w-full rounded-lg border bg-white p-4 text-left transition-colors hover:border-primary-300 ${
-                      selectedStudent?.student_id === student.student_id
-                        ? "border-primary-500 ring-1 ring-primary-500"
-                        : ""
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900">{student.full_name}</p>
-                        <p className="text-xs text-gray-500">{student.student_id}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {student.trend === "improving" && <TrendingUp className="h-4 w-4 text-accent-600" />}
-                        {student.trend === "declining" && <TrendingDown className="h-4 w-4 text-danger-500" />}
-                        {student.trend === "stable" && <Minus className="h-4 w-4 text-gray-400" />}
-                        <Badge className={getRiskBadgeColor(student.risk_tier)}>
-                          {formatPercentage(student.overall_mastery)}
-                        </Badge>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-                {filtered.length === 0 && (
-                  <p className="text-center text-sm text-gray-500 py-8">No students found</p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Student Detail */}
-          <div>
-            {selectedStudent ? (
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>{selectedStudent.student_id}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Overall Mastery</p>
-                    <p className="text-2xl font-bold">{formatPercentage(selectedStudent.overall_mastery)}</p>
-                    <Progress value={selectedStudent.overall_mastery * 100} className="mt-1" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Trend</p>
-                    <Badge variant={
-                      selectedStudent.trend === "improving" ? "success" :
-                      selectedStudent.trend === "declining" ? "danger" : "outline"
-                    }>
-                      {selectedStudent.trend}
-                    </Badge>
-                  </div>
-                  {selectedStudent.gaps.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Gaps</p>
-                      <div className="space-y-1">
-                        {selectedStudent.gaps.map((g) => (
-                          <div key={g.kc_id} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600">{g.kc_name}</span>
-                            <span className="font-medium text-danger-600">
-                              {formatPercentage(g.avg_mastery)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="flex h-48 items-center justify-center text-sm text-gray-400">
-                  Select a student to view details
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        {/* Search */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search by name or ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
         </div>
+
+        {loading ? (
+          <div className="flex h-32 items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((student) => {
+              const masteryPct = Math.round(student.overall_mastery * 100);
+              const borderColor =
+                student.risk_tier === "low" ? "border-l-emerald-500" :
+                student.risk_tier === "moderate" ? "border-l-blue-500" :
+                student.risk_tier === "high" ? "border-l-amber-500" : "border-l-red-500";
+              return (
+                <button
+                  key={student.student_id}
+                  onClick={() => router.push(`/teacher/students/${student.student_id}`)}
+                  className={`group relative rounded-xl border-l-4 ${borderColor} border bg-white p-4 text-left shadow-sm hover:shadow-md transition-all`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">{student.full_name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{student.student_id}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-600 transition-colors" />
+                  </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          masteryPct >= 70 ? "bg-emerald-500" :
+                          masteryPct >= 50 ? "bg-blue-500" :
+                          masteryPct >= 30 ? "bg-amber-500" : "bg-red-500"
+                        }`}
+                        style={{ width: `${masteryPct}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-700 w-10 text-right">{masteryPct}%</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <Badge className={`text-xs ${getRiskBadgeColor(student.risk_tier)}`}>
+                      {student.risk_tier}
+                    </Badge>
+                    <div className="flex items-center gap-1 text-xs text-gray-500">
+                      {student.trend === "improving" && <TrendingUp className="h-3 w-3 text-emerald-500" />}
+                      {student.trend === "declining" && <TrendingDown className="h-3 w-3 text-red-500" />}
+                      {student.trend === "stable" && <Minus className="h-3 w-3 text-gray-400" />}
+                      <span className="capitalize">{student.trend || "stable"}</span>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="col-span-full text-center text-sm text-gray-500 py-8">No students found</p>
+            )}
+          </div>
+        )}
       </div>
     </AppShell>
   );

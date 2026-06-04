@@ -68,8 +68,12 @@ export const dashboardApi = {
     api.get(`/dashboard/teacher/overview?class_section=${classSection}${subject ? `&subject=${subject}` : ""}`),
   studentList: (classSection: string, subject?: string) =>
     api.get(`/dashboard/teacher/students?class_section=${classSection}${subject ? `&subject=${subject}` : ""}`),
+  studentDetail: (studentId: string, subject?: string) =>
+    api.get(`/dashboard/teacher/student-detail/${studentId}${subject ? `?subject=${subject}` : ""}`),
   studentMastery: (subject?: string) =>
     api.get(`/dashboard/student/mastery${subject ? `?subject=${subject}` : ""}`),
+  studentAnalytics: (subject?: string) =>
+    api.get(`/dashboard/student/analytics${subject ? `?subject=${subject}` : ""}`),
   adminOverview: () => api.get("/dashboard/admin/overview"),
 };
 
