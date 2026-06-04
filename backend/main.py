@@ -90,6 +90,8 @@ from api.routes_quiz import router as quiz_router
 from api.routes_websocket import router as websocket_router
 from api.routes_alerts import router as alerts_router
 from api.routes_admin_analytics import router as admin_analytics_router
+from api.routes_practice import router as practice_router
+from api.routes_notifications import router as notifications_router
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(ingest_router, prefix="/api/ingest", tags=["Data Ingestion"])
@@ -99,6 +101,8 @@ app.include_router(quiz_router, prefix="/api/quiz", tags=["Quiz"])
 app.include_router(websocket_router, prefix="/api/ws", tags=["WebSocket"])
 app.include_router(alerts_router, prefix="/api/alerts", tags=["Alerts & Interventions"])
 app.include_router(admin_analytics_router, prefix="/api/admin/analytics", tags=["Admin Analytics"])
+app.include_router(practice_router, prefix="/api/practice", tags=["Practice"])
+app.include_router(notifications_router, prefix="/api/notifications", tags=["Notifications"])
 
 
 @app.exception_handler(Exception)

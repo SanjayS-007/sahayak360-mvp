@@ -120,3 +120,20 @@ export const adminAnalyticsApi = {
   effectiveness: () => api.get("/admin/analytics/effectiveness"),
   teacherWorkload: () => api.get("/admin/analytics/teacher-workload"),
 };
+
+// --- Practice ---
+export const practiceApi = {
+  generate: (data: { kc_id: string; difficulty?: string; count?: number }) =>
+    api.post("/practice/generate", data),
+  submit: (data: { kc_id: string; difficulty: string; answers: Array<{ question_id: string; selected_index: number }> }) =>
+    api.post("/practice/submit", data),
+  availableKCs: () => api.get("/practice/available-kcs"),
+};
+
+// --- Notifications ---
+export const notificationsApi = {
+  getAll: (unreadOnly?: boolean) =>
+    api.get(`/notifications/?unread_only=${unreadOnly || false}`),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`),
+  markAllRead: () => api.post("/notifications/read-all"),
+};

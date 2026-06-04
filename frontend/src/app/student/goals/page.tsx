@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,7 @@ interface GoalsData {
 
 export default function StudentGoalsPage() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [data, setData] = useState<GoalsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [practicing, setPracticing] = useState(false);
@@ -62,19 +64,7 @@ export default function StudentGoalsPage() {
   }
 
   async function startPractice(kcIds: string[]) {
-    setPracticing(true);
-    try {
-      const response = await quizApi.dispatch({
-        student_id: user?.user_id || "",
-        target_kc_ids: kcIds,
-        num_questions: 5,
-      });
-      toast.success("Practice quiz ready! Head to Quizzes tab.");
-    } catch {
-      toast.error("Practice mode unavailable right now");
-    } finally {
-      setPracticing(false);
-    }
+    router.push(`/student/practice?kc=${kcIds[0]}`);
   }
 
   // Compute streak from recent scores
