@@ -234,9 +234,9 @@ export default function KnowledgeGraphPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Knowledge Graph</h2>
           <div className="flex gap-2">
-            <Badge variant="secondary">{stats.students} Students</Badge>
-            <Badge variant="secondary">{stats.kcs} Knowledge Components</Badge>
-            <Badge variant="secondary">{stats.edges} Connections</Badge>
+            <Badge variant="outline">{stats.students} Students</Badge>
+            <Badge variant="outline">{stats.kcs} Knowledge Components</Badge>
+            <Badge variant="outline">{stats.edges} Connections</Badge>
           </div>
         </div>
 

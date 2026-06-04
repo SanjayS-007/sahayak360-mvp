@@ -40,7 +40,7 @@ export default function AdminTeachersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Teachers</h2>
-          <Badge variant="secondary" className="text-sm">
+          <Badge variant="outline" className="text-sm">
             {teachers.length} teachers
           </Badge>
         </div>
