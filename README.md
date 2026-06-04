@@ -253,6 +253,354 @@ The architecture is designed for horizontal scaling: stateless API (JWT), manage
 
 ## 🏗️ Complete System Architecture
 
+### Infrastructure Overview (System Design)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    SAHAYAK 360 — SYSTEM DESIGN                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                                             │
+│   ┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐              │
+│   │  👩‍🏫 Teacher   │     │  👨‍🎓 Student      │     │  🏫 Admin         │     │  📱 Any Device    │              │
+│   │  Browser/App  │     │  Browser/App     │     │  Browser/App     │     │  (PWA Ready)     │              │
+│   └──────┬───────┘     └────────┬─────────┘     └────────┬─────────┘     └────────┬─────────┘              │
+│          │                      │                         │                        │                        │
+│          └──────────────────────┼─────────────────────────┼────────────────────────┘                        │
+│                                 │ HTTPS (TLS 1.3)         │                                                 │
+│                                 ▼                         ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │                         ▲ VERCEL — FRONTEND HOSTING (Global CDN)                                    │    │
+│  │                                                                                                     │    │
+│  │   ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   │    │
+│  │   │                        NEXT.JS 14 APPLICATION (App Router)                                  │   │    │
+│  │   │                                                                                             │   │    │
+│  │   │  ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐    │   │    │
+│  │   │  │ Student Portal  │   │ Teacher Portal  │   │  Admin Portal   │   │  Auth Pages     │    │   │    │
+│  │   │  │ ─────────────── │   │ ─────────────── │   │ ─────────────── │   │ ─────────────── │    │   │    │
+│  │   │  │ • Dashboard     │   │ • Dashboard     │   │ • Dashboard     │   │ • Login         │    │   │    │
+│  │   │  │ • Practice      │   │ • Students      │   │ • Analytics     │   │ • Register      │    │   │    │
+│  │   │  │ • Quiz          │   │ • Input         │   │ • Teachers/[id] │   │ • Forgot Pass   │    │   │    │
+│  │   │  │ • Analytics     │   │ • Interventions │   │                 │   │                 │    │   │    │
+│  │   │  │ • Flashcards    │   │ • Alerts        │   │                 │   │                 │    │   │    │
+│  │   │  │ • Goals         │   │ • KG Visual     │   │                 │   │                 │    │   │    │
+│  │   │  │ • Leaderboard   │   │ • NL Query      │   │                 │   │                 │    │   │    │
+│  │   │  │ • Prerequisites │   │                 │   │                 │   │                 │    │   │    │
+│  │   │  └─────────────────┘   └─────────────────┘   └─────────────────┘   └─────────────────┘    │   │    │
+│  │   │                                                                                             │   │    │
+│  │   │  ┌──────────────────────────────────────────────────────────────────────────────────────┐   │   │    │
+│  │   │  │  SHARED: Zustand (state) · shadcn/ui (components) · Tailwind (styling) · Recharts    │   │   │    │
+│  │   │  └──────────────────────────────────────────────────────────────────────────────────────┘   │   │    │
+│  │   └─────────────────────────────────────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                                                     │    │
+│  │   Features: SSR · ISR · Edge Caching · Auto-HTTPS · Preview Deploys · Instant Rollback              │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                                 │                                                                           │
+│                                 │ REST API calls (JSON + JWT Bearer Token)                                  │
+│                                 ▼                                                                           │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐    │
+│  │                         ◉ RENDER — BACKEND HOSTING (Auto-deploy)                                    │    │
+│  │                                                                                                     │    │
+│  │   ┌─────────────────────────────────────────────────────────────────────────────────────────────┐   │    │
+│  │   │                        FASTAPI APPLICATION (Python 3.13 · Uvicorn ASGI)                     │   │    │
+│  │   │                                                                                             │   │    │
+│  │   │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                │   │    │
+│  │   │  │  Auth Service │  │ Ingest Service│  │  Quiz Service │  │Analytics Svc  │                │   │    │
+│  │   │  │ ───────────── │  │ ───────────── │  │ ───────────── │  │ ───────────── │                │   │    │
+│  │   │  │ JWT + bcrypt  │  │ 3-channel     │  │ Dispatch      │  │ Effectiveness │                │   │    │
+│  │   │  │ RBAC          │  │ Pandas valid. │  │ Poll          │  │ Workload      │                │   │    │
+│  │   │  │ Token refresh │  │ Normalization │  │ Submit+Score  │  │ Risk Heatmap  │                │   │    │
+│  │   │  └───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘                │   │    │
+│  │   │                                                                                             │   │    │
+│  │   │  ┌──────────────────────────────────────────────────────────────────────────────────────┐   │   │    │
+│  │   │  │              🧠 INTELLIGENCE LAYER (Zero External Dependencies)                       │   │   │    │
+│  │   │  │                                                                                      │   │   │    │
+│  │   │  │  ┌─────────┐  ┌─────────────┐  ┌──────────┐  ┌─────────────┐  ┌──────────────────┐  │   │   │    │
+│  │   │  │  │   BKT   │  │ Risk Scorer │  │   MTSS   │  │Gap Detector │  │ Ticket Lifecycle │  │   │   │    │
+│  │   │  │  │ Engine  │  │  (ABC)      │  │  Engine  │  │ (Neo4j)     │  │   (5-state)      │  │   │   │    │
+│  │   │  │  │         │  │             │  │          │  │             │  │                  │  │   │   │    │
+│  │   │  │  │ P(L|obs)│  │ 50A+25B+25C │  │ Tier 1-3 │  │ Root cause  │  │ open→resolved    │  │   │   │    │
+│  │   │  │  │ Bayesian│  │ composite   │  │ classify │  │ traversal   │  │ →closed          │  │   │   │    │
+│  │   │  │  └─────────┘  └─────────────┘  └──────────┘  └─────────────┘  └──────────────────┘  │   │   │    │
+│  │   │  │                                                                                      │   │   │    │
+│  │   │  │  Pipeline: ROUTE → VALIDATE → GAP → BKT → RISK → MTSS → TICKET → PERSIST → NEO4J    │   │   │    │
+│  │   │  └──────────────────────────────────────────────────────────────────────────────────────┘   │   │    │
+│  │   └─────────────────────────────────────────────────────────────────────────────────────────────┘   │    │
+│  │                                                                                                     │    │
+│  │   Features: Auto-deploy · Health checks · Auto-HTTPS · Managed DB · Zero-downtime deploys           │    │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────┘    │
+│                │                     │                        │                                             │
+│                │ asyncpg (async)     │ Bolt protocol          │ REST API                                    │
+│                ▼                     ▼                        ▼                                             │
+│  ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │                              💾 DATA & EXTERNAL SERVICES                                             │   │
+│  │                                                                                                      │   │
+│  │   ┌─────────────────────┐   ┌─────────────────────┐   ┌─────────────────────┐   ┌───────────────┐   │   │
+│  │   │  PostgreSQL 16      │   │  Neo4j 5            │   │ Google Gemini 1.5   │   │   OpenCV      │   │   │
+│  │   │ ─────────────────── │   │ ─────────────────── │   │ ─────────────────── │   │ ───────────── │   │   │
+│  │   │ • Users             │   │ • KC Nodes (7)      │   │ • Quiz generation   │   │ • Deskew      │   │   │
+│  │   │ • Assessment Events │   │ • PREREQUISITE_OF   │   │ • NL text parsing   │   │ • Threshold   │   │   │
+│  │   │ • Mastery Records   │   │ • MASTERED edges    │   │ • Vision/OCR        │   │ • Contour     │   │   │
+│  │   │ • Quiz Sessions     │   │ • Subject taxonomy  │   │ • Difficulty calib. │   │ • Preprocess  │   │   │
+│  │   │ • Tickets           │   │                     │   │                     │   │              │   │   │
+│  │   │ • Audit Log         │   │ Cypher queries      │   │ 60 RPM free tier    │   │ CPU-only     │   │   │
+│  │   │                     │   │ O(depth) traversal  │   │ 1M token context    │   │ No GPU       │   │   │
+│  │   │ ACID · JSONB · SSL  │   │ DAG · Bolt · TLS    │   │ Text+Vision unified │   │ Headless     │   │   │
+│  │   └─────────────────────┘   └─────────────────────┘   └─────────────────────┘   └───────────────┘   │   │
+│  │                                                                                                      │   │
+│  └──────────────────────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  SECURITY: JWT (24h) · bcrypt (cost=12) · RBAC · CORS whitelist · No PII in logs · SSL everywhere          │
+│  SCALING:  Stateless API · CDN frontend · Managed DB · Async I/O · Horizontal-ready · Zero sessions        │
+│  DEPLOY:   git push main → auto-deploy (both platforms) · Preview branches · Instant rollback              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### CI/CD & Deployment Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                          DEPLOYMENT PIPELINE (GitOps)                                    │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│   ┌──────────┐         ┌──────────────┐         ┌───────────────┐                       │
+│   │  👨‍💻      │         │   GitHub     │         │  CI Checks    │                       │
+│   │Developer │────────▶│  Repository  │────────▶│  (on PR)      │                       │
+│   │          │  push   │  (main)      │  hook   │               │                       │
+│   └──────────┘         └──────┬───────┘         └───────┬───────┘                       │
+│                                │                         │                               │
+│                                │ merge to main           │ ✅ All checks pass            │
+│                                ▼                         ▼                               │
+│              ┌─────────────────────────────────────────────────┐                         │
+│              │              AUTO-DEPLOY TRIGGERS               │                         │
+│              └──────────┬─────────────────────┬───────────────┘                         │
+│                         │                     │                                          │
+│              ┌──────────▼──────────┐  ┌───────▼────────────────┐                         │
+│              │                     │  │                        │                         │
+│              │   ▲ VERCEL          │  │   ◉ RENDER             │                         │
+│              │   ─────────         │  │   ──────────           │                         │
+│              │                     │  │                        │                         │
+│              │  Detects: frontend/ │  │  Detects: backend/     │                         │
+│              │                     │  │                        │                         │
+│              │  1. npm install     │  │  1. pip install -r     │                         │
+│              │  2. next build      │  │  2. Run migrations     │                         │
+│              │  3. Deploy to CDN   │  │  3. uvicorn start      │                         │
+│              │  4. Invalidate edge │  │  4. Health check pass  │                         │
+│              │                     │  │                        │                         │
+│              │  Result:            │  │  Result:               │                         │
+│              │  Global CDN (300+   │  │  ASGI server live      │                         │
+│              │  edge locations)    │  │  PostgreSQL connected  │                         │
+│              │                     │  │  Neo4j connected       │                         │
+│              └──────────┬──────────┘  └───────┬────────────────┘                         │
+│                         │                     │                                          │
+│                         │                     │                                          │
+│                         ▼                     ▼                                          │
+│              ┌────────────────────────────────────────────────┐                          │
+│              │             🌐 PRODUCTION LIVE                 │                          │
+│              │                                                │                          │
+│              │  Frontend: sahayak360-mvp.vercel.app           │                          │
+│              │  Backend:  sahayak360-api.onrender.com         │                          │
+│              │  API Docs: sahayak360-api.onrender.com/docs    │                          │
+│              │                                                │                          │
+│              │  ┌────────────┐  ┌────────────┐  ┌──────────┐ │                          │
+│              │  │ Monitoring │  │ Auto-HTTPS │  │ Rollback │ │                          │
+│              │  │ (health)   │  │ (Let's     │  │ (instant │ │                          │
+│              │  │            │  │  Encrypt)  │  │  on fail)│ │                          │
+│              │  └────────────┘  └────────────┘  └──────────┘ │                          │
+│              └────────────────────────────────────────────────┘                          │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Data Flow — Complete Request Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                    DATA FLOW: Assessment Ingest → All Outputs                            │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                         │
+│  TEACHER INPUT                PROCESSING                          OUTPUTS               │
+│  ════════════                 ══════════                          ═══════               │
+│                                                                                         │
+│  ┌──────────┐                                                                           │
+│  │ 📋 JSON  │───┐                                                                       │
+│  └──────────┘   │                                                                       │
+│  ┌──────────┐   │         ┌─────────────────────────────────────────────────────────┐   │
+│  │ 💬 Text  │───┼────────▶│              10-STEP PIPELINE (4 seconds)                │   │
+│  └──────────┘   │         │                                                         │   │
+│  ┌──────────┐   │         │  ┌─────┐ ┌────────┐ ┌─────┐ ┌─────┐ ┌──────┐ ┌──────┐ │   │
+│  │ 📸 Photo │───┘         │  │ROUTE│→│VALIDATE│→│ GAP │→│ BKT │→│ RISK │→│ MTSS │ │   │
+│  └──────────┘             │  └─────┘ └────────┘ └─────┘ └─────┘ └──────┘ └──────┘ │   │
+│                           │                                                   │     │   │
+│                           │  ┌────────┐ ┌─────────┐ ┌───────────┐ ┌──────────┐│     │   │
+│                           │  │ TICKET │→│ PERSIST │→│  MASTERY  │→│NEO4J SYNC││     │   │
+│                           │  └────────┘ └─────────┘ └───────────┘ └──────────┘│     │   │
+│                           └─────────────────────────────────────────────────────┘     │   │
+│                                                           │                           │   │
+│                                    ┌──────────────────────┼──────────────────┐         │   │
+│                                    │                      │                  │         │   │
+│                                    ▼                      ▼                  ▼         │   │
+│                           ┌────────────────┐   ┌──────────────────┐  ┌────────────┐   │   │
+│                           │ 🎯 STUDENT     │   │ 🎫 TEACHER       │  │ 📊 ADMIN   │   │   │
+│                           │                │   │                  │  │            │   │   │
+│                           │ Adaptive quiz  │   │ Intervention     │  │ Risk heat- │   │   │
+│                           │ targeting ROOT │   │ ticket with      │  │ map update │   │   │
+│                           │ prerequisite   │   │ specific KC +    │  │ per-section│   │   │
+│                           │ gap, not       │   │ MTSS tier +      │  │ risk %     │   │   │
+│                           │ symptom        │   │ action plan      │  │ live       │   │   │
+│                           │                │   │                  │  │            │   │   │
+│                           │ Appears in     │   │ Appears in       │  │ Appears in │   │   │
+│                           │ ≤10 seconds    │   │ ticket dashboard │  │ analytics  │   │   │
+│                           └────────────────┘   └──────────────────┘  └────────────┘   │   │
+│                                                                                         │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 👤 User Workflow Walkthroughs
+
+### 👩‍🏫 Teacher Workflow — Complete Journey
+
+```mermaid
+flowchart TD
+    START(["👩‍🏫 Teacher opens Sahayak 360"]) --> LOGIN
+
+    LOGIN["Login with teacher1@school.com"] --> DASH
+
+    DASH["📊 TEACHER DASHBOARD<br/>━━━━━━━━━━━━━━━━━━━━<br/>• Risk heatmap: 9-A=34%, 9-B=26%<br/>• Total students: 13<br/>• Open tickets: 302<br/>• Recent events: 106"] --> CHOICE
+
+    CHOICE{"What does teacher<br/>want to do?"}
+
+    CHOICE -->|"Submit assessment"| INPUT
+    CHOICE -->|"Check student progress"| STUDENTS
+    CHOICE -->|"Send quick quiz"| QUIZ
+    CHOICE -->|"Manage interventions"| TICKETS
+    CHOICE -->|"Ask a question"| NL_QUERY
+    CHOICE -->|"View knowledge graph"| KG
+
+    INPUT["📥 INPUT PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>Choose channel:<br/>• Upload JSON file<br/>• Type in natural language<br/>• Photograph answer sheets"] --> SUBMIT_INPUT
+    SUBMIT_INPUT["Submit → 10-step pipeline runs"] --> RESULT_INPUT
+    RESULT_INPUT["✅ Results in 4 seconds:<br/>• 5 gaps detected<br/>• 3 tickets raised (Tier 2+)<br/>• 12 mastery records updated<br/>• Admin heatmap refreshed"] --> DASH
+
+    STUDENTS["👥 STUDENTS PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>13 students listed with:<br/>• Per-KC mastery bars (color coded)<br/>• MTSS tier badge<br/>• Risk score<br/>• Last assessment date"] --> STUDENT_DETAIL
+    STUDENT_DETAIL["Click student → Deep dive:<br/>• All KC mastery values<br/>• Trend arrows (↑/↓)<br/>• Active tickets<br/>• Quiz history"] --> DISPATCH_FROM_DETAIL
+    DISPATCH_FROM_DETAIL["🎯 Dispatch targeted quiz<br/>from student detail page"] --> QUIZ
+
+    QUIZ["🎯 QUIZ DISPATCH<br/>━━━━━━━━━━━━━━━━━━━━<br/>1. Select student (STU-2001)<br/>2. Choose KC (Linear Equations)<br/>3. Set difficulty (basic)<br/>4. Set num questions (3)<br/>5. Click Dispatch"] --> QUIZ_SENT
+    QUIZ_SENT["✅ Quiz created<br/>Student will see it in ≤10s<br/>via HTTP polling"] --> QUIZ_MONITOR
+    QUIZ_MONITOR["Monitor: Check if student<br/>completed. Score appears<br/>automatically on dashboard."] --> DASH
+
+    TICKETS["🎫 INTERVENTIONS PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>• Filter: open/acknowledged/in_progress<br/>• Each ticket shows: student, KC, tier, type<br/>• Actions: acknowledge, start, resolve, close"] --> TICKET_ACTION
+    TICKET_ACTION["Take action on ticket:<br/>• Acknowledge (I see it)<br/>• Start (working on it)<br/>• Resolve (intervention done)<br/>• Close (mastery improved)"] --> DASH
+
+    NL_QUERY["💬 NL QUERY PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>'Show me students failing in fractions<br/>who haven't improved in 2 weeks'<br/>→ AI-powered filtered results"] --> DASH
+
+    KG["🕸️ KNOWLEDGE GRAPH<br/>━━━━━━━━━━━━━━━━━━━━<br/>Visual D3.js graph showing:<br/>• KC nodes with mastery overlay<br/>• Prerequisite edges<br/>• Gap highlighting (red nodes)"] --> DASH
+
+    style START fill:#ecfdf5,stroke:#059669
+    style DASH fill:#eff6ff,stroke:#2563eb
+    style INPUT fill:#fef3c7,stroke:#d97706
+    style QUIZ fill:#faf5ff,stroke:#7c3aed
+    style TICKETS fill:#fce7f3,stroke:#be185d
+    style RESULT_INPUT fill:#dcfce7,stroke:#16a34a
+```
+
+---
+
+### 👨‍🎓 Student Workflow — Complete Journey
+
+```mermaid
+flowchart TD
+    START(["👨‍🎓 Student opens Sahayak 360"]) --> LOGIN
+
+    LOGIN["Login with student1@school.com"] --> DASH
+
+    DASH["📊 STUDENT DASHBOARD<br/>━━━━━━━━━━━━━━━━━━━━<br/>• Overall mastery: 58%<br/>• XP earned: 1,250<br/>• Active quizzes: 2 pending<br/>• Streak: 5 days<br/>• Per-KC mastery bars with trends"] --> CHOICE
+
+    CHOICE{"What does student<br/>want to do?"}
+
+    CHOICE -->|"Self-study"| PRACTICE
+    CHOICE -->|"Take teacher quiz"| QUIZ
+    CHOICE -->|"View progress"| ANALYTICS
+    CHOICE -->|"Quick review"| FLASHCARDS
+    CHOICE -->|"Set targets"| GOALS
+    CHOICE -->|"Compare peers"| LEADERBOARD
+    CHOICE -->|"See dependencies"| PREREQ
+
+    PRACTICE["🎯 PRACTICE PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>Available KCs with mastery %:<br/>• Linear Equations: 31% ⚠️<br/>• Fractions: 78% ✅<br/>• Statistics: 45% ⚠️<br/>Choose KC + difficulty + count"] --> PRACTICE_GEN
+    PRACTICE_GEN["Gemini generates adaptive questions<br/>matched to current mastery level"] --> PRACTICE_ANSWER
+    PRACTICE_ANSWER["Answer questions → Submit"] --> PRACTICE_RESULT
+    PRACTICE_RESULT["✅ Results:<br/>• Score: 2/3 (67%)<br/>• Mastery: 31% → 35% (+4%)<br/>• XP earned: +25<br/>• Explanations for wrong answers"] --> DASH
+
+    QUIZ["📝 QUIZ PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>Polls every 10 seconds for new quizzes<br/>Pending quizzes appear automatically<br/>• QZ-4F33C8D8: Linear Eq (3 questions)<br/>• QZ-A1B2C3D4: Statistics (5 questions)"] --> QUIZ_TAKE
+    QUIZ_TAKE["Take quiz:<br/>• Timer: 5 minutes<br/>• MCQ format<br/>• Cannot go back (prevents cheating)"] --> QUIZ_SUBMIT
+    QUIZ_SUBMIT["Submit → Instant scoring"] --> QUIZ_RESULT
+    QUIZ_RESULT["✅ Results:<br/>• Score: 1/3 (33%)<br/>• Mastery: 31% → 28% (-3%)<br/>• Correct answers + explanations shown<br/>• BKT updated, ticket auto-raised"] --> DASH
+
+    ANALYTICS["📈 ANALYTICS PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>• Mastery trend chart (last 30 days)<br/>• KC-wise progress bars<br/>• Strengths vs weaknesses<br/>• Improvement suggestions<br/>• XP history graph"] --> DASH
+
+    FLASHCARDS["🃏 FLASHCARDS PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>Spaced repetition cards for weak KCs<br/>• Flip to reveal answer<br/>• Rate: Easy/Medium/Hard<br/>• Scheduling based on memory model"] --> DASH
+
+    GOALS["🎯 GOALS PAGE<br/>━━━━━━━━━━━━━━━━━━━━<br/>• Set target: 'Reach 70% in Linear Eq by July'<br/>• Track progress toward goal<br/>• Milestone celebrations"] --> DASH
+
+    LEADERBOARD["🏆 LEADERBOARD<br/>━━━━━━━━━━━━━━━━━━━━<br/>• Class rank by XP<br/>• Weekly top performers<br/>• Subject-wise champions<br/>• Badges earned"] --> DASH
+
+    PREREQ["🗺️ PREREQUISITES MAP<br/>━━━━━━━━━━━━━━━━━━━━<br/>Visual graph showing:<br/>• Which KCs you've mastered (green)<br/>• Which are in progress (yellow)<br/>• Which are blocked (red)<br/>• What to learn next (highlighted)"] --> DASH
+
+    style START fill:#ecfdf5,stroke:#059669
+    style DASH fill:#eff6ff,stroke:#2563eb
+    style PRACTICE fill:#fef3c7,stroke:#d97706
+    style QUIZ fill:#faf5ff,stroke:#7c3aed
+    style PRACTICE_RESULT fill:#dcfce7,stroke:#16a34a
+    style QUIZ_RESULT fill:#fecaca,stroke:#dc2626
+```
+
+---
+
+### 🏫 Admin Workflow — Complete Journey
+
+```mermaid
+flowchart TD
+    START(["🏫 Admin opens Sahayak 360"]) --> LOGIN
+
+    LOGIN["Login with admin1@school.com"] --> DASH
+
+    DASH["📊 ADMIN DASHBOARD<br/>━━━━━━━━━━━━━━━━━━━━<br/>School-wide KPIs:<br/>• Total teachers: 3<br/>• Total students: 18<br/>• Total events: 106<br/>• Total tickets: 419<br/>• Avg school mastery: 56%"] --> CHOICE
+
+    CHOICE{"What does admin<br/>want to analyze?"}
+
+    CHOICE -->|"Intervention effectiveness"| EFFECTIVENESS
+    CHOICE -->|"Teacher workload"| WORKLOAD
+    CHOICE -->|"Section risk"| HEATMAP
+    CHOICE -->|"Deep dive teacher"| TEACHER_DETAIL
+
+    EFFECTIVENESS["📊 EFFECTIVENESS ANALYTICS<br/>━━━━━━━━━━━━━━━━━━━━<br/>By intervention type:<br/><br/>• Peer Tutoring: 420 total<br/>  ├─ Resolved: 58 (14%)<br/>  ├─ In Progress: 120<br/>  └─ Open: 242<br/><br/>• Remediation Plans: 0 total<br/>  └─ (Not being used)<br/><br/>• Parent Meetings: 0 total<br/>  └─ (Not being used)<br/><br/>INSIGHT: Only peer tutoring<br/>is active. Diversify strategies."] --> ACTION_EFF
+    ACTION_EFF["Admin decision:<br/>→ Mandate 20% parent meetings<br/>→ Train teachers on remediation plans<br/>→ Track resolution rates next month"] --> DASH
+
+    WORKLOAD["⚖️ TEACHER WORKLOAD<br/>━━━━━━━━━━━━━━━━━━━━<br/>Distribution:<br/><br/>• Ms. Priya Sharma: 13 students, 303 tickets<br/>  └─ ⚠️ OVERLOADED<br/><br/>• Mr. Rajesh Kumar: 5 students, 117 tickets<br/>  └─ ✅ Manageable<br/><br/>• Ms. Anita Desai: 13 students, 0 tickets<br/>  └─ ❓ Underutilized (new teacher?)"] --> ACTION_WORK
+    ACTION_WORK["Admin decision:<br/>→ Redistribute 4 students from Priya to Anita<br/>→ Check why Anita has 0 tickets (not using system?)<br/>→ Provide workload relief for Priya"] --> DASH
+
+    HEATMAP["🗺️ RISK HEATMAP<br/>━━━━━━━━━━━━━━━━━━━━<br/>Section-level risk comparison:<br/><br/>• 9-A: ████████░░ 34% at-risk<br/>• 9-B: ██████░░░░ 26% at-riskr/>• 9-C: ████░░░░░░ 18% at-risk<br/><br/>Trend: 9-A rose from 22% → 34%<br/>in last 2 months (deteriorating)"] --> ACTION_HEAT
+    ACTION_HEAT["Admin decision:<br/>→ Allocate support teacher to 9-A<br/>→ Schedule parent meeting for 9-A Tier 3 students<br/>→ Escalate to district if no improvement in 2 weeks"] --> DASH
+
+    TEACHER_DETAIL["👩‍🏫 TEACHER DETAIL (click any teacher)<br/>━━━━━━━━━━━━━━━━━━━━<br/>Ms. Priya Sharma (TCH-1001):<br/><br/>• Students: 13<br/>• Avg mastery: 56%<br/>• Open tickets: 303<br/>• Sections: 9-A, 9-B<br/><br/>Per-student breakdown:<br/>• Aarav: 31% (Tier 2+) - 5 open tickets<br/>• Sneha: 72% (Tier 1) - 0 tickets<br/>• Ravi: 18% (Tier 3) - 8 open tickets"] --> ACTION_TEACHER
+    ACTION_TEACHER["Admin decision:<br/>→ Aarav and Ravi need escalation<br/>→ Schedule counselor session for Ravi (Tier 3)<br/>→ Commend Priya for managing heavy load"] --> DASH
+
+    style START fill:#ecfdf5,stroke:#059669
+    style DASH fill:#eff6ff,stroke:#2563eb
+    style EFFECTIVENESS fill:#fef3c7,stroke:#d97706
+    style WORKLOAD fill:#faf5ff,stroke:#7c3aed
+    style HEATMAP fill:#fce7f3,stroke:#be185d
+    style TEACHER_DETAIL fill:#f0fdf4,stroke:#16a34a
+```
+
+---
+
 ### Layered Architecture Overview
 
 ```mermaid
@@ -464,6 +812,72 @@ flowchart TB
     style VERCEL fill:#000,color:#fff
     style RENDER fill:#1a1a2e,color:#fff
     style EXTERNAL fill:#f8fafc,stroke:#64748b
+```
+
+---
+
+### Network & Security Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                     NETWORK & SECURITY TOPOLOGY                                 │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│   INTERNET                                                                      │
+│   ════════                                                                      │
+│        │                                                                        │
+│        │ TLS 1.3 (HTTPS everywhere)                                             │
+│        │                                                                        │
+│        ├──────────────────────────┐                                             │
+│        │                          │                                             │
+│        ▼                          ▼                                             │
+│   ┌──────────────────┐    ┌──────────────────┐                                  │
+│   │  Vercel Edge     │    │  Render Proxy    │                                  │
+│   │  (CDN + WAF)     │    │  (Load Balancer) │                                  │
+│   │                  │    │                  │                                  │
+│   │  • DDoS protect  │    │  • Rate limiting │                                  │
+│   │  • Edge caching  │    │  • CORS enforce  │                                  │
+│   │  • Geo-routing   │    │  • JWT validate  │                                  │
+│   └────────┬─────────┘    └────────┬─────────┘                                  │
+│            │                       │                                            │
+│            │                       ▼                                            │
+│            │              ┌──────────────────┐                                  │
+│            │              │  FastAPI App     │                                  │
+│            │              │  ────────────    │                                  │
+│            │              │                  │                                  │
+│            │              │  MIDDLEWARE:     │                                  │
+│            │              │  • CORS origins  │                                  │
+│            │              │  • JWT decode    │                                  │
+│            │              │  • RBAC check    │                                  │
+│            │              │  • Request log   │                                  │
+│            │              │  (no PII)        │                                  │
+│            │              │                  │                                  │
+│            │              │  AUTH FLOW:      │                                  │
+│            │              │  email+pass →    │                                  │
+│            │              │  bcrypt verify → │                                  │
+│            │              │  JWT sign (24h)  │                                  │
+│            │              │  → Bearer token  │                                  │
+│            │              └────────┬─────────┘                                  │
+│            │                       │                                            │
+│            │              ┌────────┼─────────────────────┐                      │
+│            │              │        │                     │                      │
+│            │              ▼        ▼                     ▼                      │
+│            │      ┌────────────┐ ┌──────────┐   ┌────────────────┐              │
+│            │      │PostgreSQL  │ │ Neo4j    │   │ Gemini API     │              │
+│            │      │(SSL only)  │ │(Bolt+TLS)│   │ (API key auth) │              │
+│            │      │            │ │          │   │                │              │
+│            │      │Private net │ │Private   │   │ Google Cloud   │              │
+│            │      │No public IP│ │endpoint  │   │ (external)     │              │
+│            │      └────────────┘ └──────────┘   └────────────────┘              │
+│            │                                                                    │
+│   ROLE-BASED ACCESS CONTROL (RBAC):                                             │
+│   ═══════════════════════════════════                                            │
+│                                                                                 │
+│   Student role:  /student/* endpoints only, own data only                       │
+│   Teacher role:  /teacher/* + /ingest/* + /quiz/dispatch, own students only      │
+│   Admin role:    /admin/* + all read endpoints, school-wide data                 │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
