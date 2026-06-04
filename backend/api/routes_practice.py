@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.dependencies import get_current_user, require_role
 from db.models import MasteryRecord, User, Notification
 from db.postgres import get_db
+from api.routes_gamification import award_xp
 
 router = APIRouter()
 
@@ -184,6 +185,11 @@ async def submit_practice(
     )
     db.add(notif)
 
+    # Award XP (10 base + 5 per correct + bonus for difficulty)
+    diff_bonus = {"basic": 0, "medium": 5, "advanced": 10}.get(submission.difficulty, 0)
+    xp_earned = 10 + (correct * 5) + (diff_bonus * correct)
+    new_badges = await award_xp(db, user.user_id, xp_earned, correct, total, score)
+
     await db.commit()
 
     # Suggest next difficulty
@@ -200,6 +206,8 @@ async def submit_practice(
         "results": results,
         "mastery_after": new_mastery,
         "next_difficulty": next_difficulty,
+        "xp_earned": xp_earned,
+        "badges_earned": [{"name": b["name"], "icon": b["icon"]} for b in new_badges],
         "message": "Great job!" if score >= 0.8 else "Keep practicing!" if score >= 0.5 else "Review the explanations and try again.",
     }
 

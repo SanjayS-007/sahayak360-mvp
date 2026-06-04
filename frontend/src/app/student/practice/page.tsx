@@ -40,6 +40,8 @@ interface SubmitResult {
   results: ResultItem[];
   mastery_after: number;
   next_difficulty: string;
+  xp_earned?: number;
+  badges_earned?: Array<{ name: string; icon: string }>;
   message: string;
 }
 
@@ -253,6 +255,20 @@ export default function PracticePage() {
                   <span>Score: <strong>{Math.round(result.score * 100)}%</strong></span>
                   <span>Mastery: <strong>{Math.round(result.mastery_after * 100)}%</strong></span>
                 </div>
+                {result.xp_earned !== undefined && (
+                  <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
+                    +{result.xp_earned} XP earned!
+                  </div>
+                )}
+                {result.badges_earned && result.badges_earned.length > 0 && (
+                  <div className="mt-2 flex justify-center gap-2">
+                    {result.badges_earned.map((b) => (
+                      <span key={b.name} className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
+                        {b.icon} {b.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

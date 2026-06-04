@@ -18,6 +18,9 @@ import {
   ClipboardCheck,
   Target,
   Brain,
+  Trophy,
+  BookOpen,
+  GitBranch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +38,9 @@ const studentLinks = [
   { href: "/student/dashboard", label: "My Progress", icon: LayoutDashboard },
   { href: "/student/goals", label: "Goals", icon: Target },
   { href: "/student/practice", label: "Practice", icon: Brain },
+  { href: "/student/flashcards", label: "Flashcards", icon: BookOpen },
+  { href: "/student/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/student/prerequisites", label: "Prerequisites", icon: GitBranch },
   { href: "/student/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/student/quiz", label: "Quizzes", icon: ClipboardList },
 ];

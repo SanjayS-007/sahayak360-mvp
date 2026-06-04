@@ -156,3 +156,20 @@ class Notification(Base):
     read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     read_at = Column(DateTime, nullable=True)
+
+
+class StudentGamification(Base):
+    __tablename__ = "student_gamification"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    student_id = Column(String(20), ForeignKey("users.user_id"), unique=True, nullable=False)
+    xp = Column(Integer, default=0)
+    level = Column(Integer, default=1)
+    streak_days = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_practice_date = Column(Date, nullable=True)
+    badges = Column(JSON, default=list)  # [{id, name, earned_at}]
+    total_practices = Column(Integer, default=0)
+    total_correct = Column(Integer, default=0)
+    total_questions = Column(Integer, default=0)
+    updated_at = Column(DateTime, default=datetime.utcnow)

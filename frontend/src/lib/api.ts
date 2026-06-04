@@ -137,3 +137,9 @@ export const notificationsApi = {
   markRead: (id: string) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
 };
+
+// --- Gamification ---
+export const gamificationApi = {
+  profile: () => api.get("/gamification/profile"),
+  leaderboard: () => api.get("/gamification/leaderboard"),
+};
