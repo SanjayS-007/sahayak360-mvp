@@ -311,7 +311,7 @@ export default function StudentAnalyticsPage() {
                 <Trophy className="h-5 w-5" />
                 Your Strengths
               </CardTitle>
-              <p className="text-xs text-gray-500">Topics you've mastered</p>
+              <p className="text-xs text-gray-500">Topics you&apos;ve mastered</p>
             </CardHeader>
             <CardContent>
               {data.strengths.length > 0 ? (

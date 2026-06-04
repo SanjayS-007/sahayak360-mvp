@@ -69,6 +69,7 @@ export default function StudentQuizPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   const handleSubmit = async () => {
