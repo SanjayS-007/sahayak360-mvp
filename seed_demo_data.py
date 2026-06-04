@@ -79,16 +79,26 @@ KNOWLEDGE_COMPONENTS = [
 
 # Each student has a base ability per KC that improves slightly over weeks
 STUDENT_PROFILES = {
-    "STU-2001": {"label": "struggling", "base": 0.25, "growth": 0.03, "variance": 0.10},  # Aarav - at risk
-    "STU-2002": {"label": "moderate", "base": 0.55, "growth": 0.04, "variance": 0.08},    # Diya - improving
-    "STU-2003": {"label": "struggling", "base": 0.30, "growth": 0.02, "variance": 0.12},  # Arjun - at risk
-    "STU-2004": {"label": "good", "base": 0.70, "growth": 0.03, "variance": 0.07},        # Ananya - solid
-    "STU-2005": {"label": "excellent", "base": 0.85, "growth": 0.02, "variance": 0.05},   # Vivaan - top
-    "STU-2006": {"label": "moderate", "base": 0.50, "growth": 0.05, "variance": 0.10},    # Ishita - growing
-    "STU-2007": {"label": "good", "base": 0.65, "growth": 0.03, "variance": 0.08},        # Rohan - above avg
-    "STU-2008": {"label": "excellent", "base": 0.80, "growth": 0.02, "variance": 0.05},   # Kavya - top
-    "STU-2009": {"label": "moderate", "base": 0.45, "growth": 0.04, "variance": 0.10},    # Aditya - 9-B
-    "STU-2010": {"label": "good", "base": 0.68, "growth": 0.03, "variance": 0.07},        # Meera - 9-B
+    "STU-2001": {"label": "struggling", "base": 0.35, "growth": 0.04, "variance": 0.12,   # Aarav - at risk but with strengths
+                 "kc_strengths": {"STAT-001": 0.60, "GEO-001": 0.50, "ALG-001": 0.40, "ALG-004": 0.15, "TRIG-001": 0.18}},
+    "STU-2002": {"label": "moderate", "base": 0.55, "growth": 0.04, "variance": 0.08,     # Diya - improving
+                 "kc_strengths": {"STAT-001": 0.70, "ALG-001": 0.60, "TRIG-001": 0.35}},
+    "STU-2003": {"label": "struggling", "base": 0.30, "growth": 0.02, "variance": 0.12,   # Arjun - at risk
+                 "kc_strengths": {"GEO-001": 0.55, "STAT-002": 0.45, "ALG-003": 0.15}},
+    "STU-2004": {"label": "good", "base": 0.70, "growth": 0.03, "variance": 0.07,         # Ananya - solid
+                 "kc_strengths": {"ALG-001": 0.85, "STAT-001": 0.80, "TRIG-001": 0.50}},
+    "STU-2005": {"label": "excellent", "base": 0.85, "growth": 0.02, "variance": 0.05,    # Vivaan - top
+                 "kc_strengths": {"ALG-002": 0.90, "GEO-003": 0.75}},
+    "STU-2006": {"label": "moderate", "base": 0.50, "growth": 0.05, "variance": 0.10,     # Ishita - growing
+                 "kc_strengths": {"STAT-001": 0.65, "GEO-002": 0.55, "ALG-004": 0.30}},
+    "STU-2007": {"label": "good", "base": 0.65, "growth": 0.03, "variance": 0.08,         # Rohan - above avg
+                 "kc_strengths": {"ALG-001": 0.80, "ALG-002": 0.70, "GEO-003": 0.45}},
+    "STU-2008": {"label": "excellent", "base": 0.80, "growth": 0.02, "variance": 0.05,    # Kavya - top
+                 "kc_strengths": {"TRIG-001": 0.85, "ALG-004": 0.75}},
+    "STU-2009": {"label": "moderate", "base": 0.45, "growth": 0.04, "variance": 0.10,     # Aditya - 9-B
+                 "kc_strengths": {"STAT-002": 0.60, "GEO-001": 0.55, "ALG-003": 0.25}},
+    "STU-2010": {"label": "good", "base": 0.68, "growth": 0.03, "variance": 0.07,         # Meera - 9-B
+                 "kc_strengths": {"ALG-001": 0.78, "STAT-001": 0.75, "GEO-003": 0.50}},
 }
 
 # Per-KC difficulty multiplier (some KCs are harder)
@@ -111,7 +121,11 @@ def compute_score(student_id, kc_id, week):
     profile = STUDENT_PROFILES[student_id]
     difficulty = KC_DIFFICULTY[kc_id]
     
-    base = profile["base"] * difficulty
+    # Use per-KC strength if available, otherwise fall back to base
+    kc_strengths = profile.get("kc_strengths", {})
+    base_ability = kc_strengths.get(kc_id, profile["base"])
+    
+    base = base_ability * difficulty
     growth = profile["growth"] * week
     noise = random.uniform(-profile["variance"], profile["variance"])
     

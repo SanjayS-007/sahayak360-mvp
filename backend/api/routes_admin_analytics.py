@@ -166,3 +166,76 @@ async def teacher_workload(
         })
 
     return {"teachers": sorted(teachers, key=lambda x: x["open_tickets"], reverse=True)}
+
+
+@router.get("/teacher/{teacher_id}")
+async def teacher_profile(
+    teacher_id: str,
+    user: User = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Detailed teacher profile for admin view."""
+    # Get teacher info
+    result = await db.execute(
+        select(User).where(User.user_id == teacher_id, User.role == "teacher")
+    )
+    teacher = result.scalar_one_or_none()
+    if not teacher:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Teacher not found")
+
+    # Get student count in teacher's class
+    student_count_result = await db.execute(
+        select(func.count(User.id)).where(
+            User.role == "student",
+            User.class_section == teacher.class_section,
+        )
+    )
+    student_count = student_count_result.scalar() or 0
+
+    # Get ticket stats for this teacher
+    ticket_result = await db.execute(
+        select(
+            func.count(InterventionTicket.id).label("total"),
+            func.sum(case((InterventionTicket.status == "resolved", 1), else_=0)).label("resolved"),
+            func.sum(case((InterventionTicket.status.in_(["open", "assigned", "in_progress"]), 1), else_=0)).label("active"),
+        ).where(InterventionTicket.teacher_id == teacher_id)
+    )
+    ticket_row = ticket_result.one()
+
+    # Get assessment count
+    assessment_result = await db.execute(
+        select(func.count(AssessmentEvent.id)).where(
+            AssessmentEvent.teacher_id == teacher_id
+        )
+    )
+    assessment_count = assessment_result.scalar() or 0
+
+    # Get avg mastery for teacher's class
+    mastery_result = await db.execute(
+        select(func.avg(MasteryRecord.p_mastery)).where(
+            MasteryRecord.student_id.in_(
+                select(User.user_id).where(
+                    User.role == "student",
+                    User.class_section == teacher.class_section,
+                )
+            )
+        )
+    )
+    avg_mastery = mastery_result.scalar() or 0.0
+
+    return {
+        "teacher_id": teacher.user_id,
+        "full_name": teacher.full_name,
+        "email": teacher.email,
+        "class_section": teacher.class_section,
+        "department_id": teacher.department_id,
+        "student_count": student_count,
+        "total_assessments": assessment_count,
+        "avg_class_mastery": round(float(avg_mastery), 3),
+        "tickets": {
+            "total": ticket_row.total or 0,
+            "resolved": ticket_row.resolved or 0,
+            "active": ticket_row.active or 0,
+        },
+    }

@@ -141,3 +141,44 @@ async def list_quiz_sessions(
         }
         for s in sessions
     ]
+
+
+@router.get("/{session_id}")
+async def get_quiz_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get full quiz session details including questions (for student to take the quiz)."""
+    result = await db.execute(
+        select(QuizSession).where(QuizSession.session_id == session_id)
+    )
+    session = result.scalar_one_or_none()
+
+    if not session:
+        raise HTTPException(status_code=404, detail="Quiz session not found")
+    if session.student_id != user.user_id and session.teacher_id != user.user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    # Build questions for student (strip correct answers)
+    questions_for_student = []
+    for q in (session.questions or []):
+        questions_for_student.append({
+            "question_id": q.get("question_id") or q.get("id"),
+            "question_text": q.get("question_text") or q.get("text"),
+            "options": q.get("options", []),
+            "bloom_level": q.get("bloom_level", "Apply"),
+            "kc_id": q.get("kc_id", ""),
+        })
+
+    return {
+        "session_id": session.session_id,
+        "student_id": session.student_id,
+        "teacher_id": session.teacher_id,
+        "status": session.status,
+        "target_kc_ids": session.target_kc_ids,
+        "questions": questions_for_student,
+        "time_limit_seconds": 600,
+        "dispatched_at": session.dispatched_at.isoformat() if session.dispatched_at else None,
+        "score": session.score,
+    }

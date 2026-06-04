@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { AppShell } from "@/components/shared/app-shell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
-import { Users, BookOpen } from "lucide-react";
+import { Users, BookOpen, ArrowRight } from "lucide-react";
 
 interface TeacherInfo {
   user_id: string;
@@ -52,29 +53,32 @@ export default function AdminTeachersPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {teachers.map((teacher) => (
-              <Card key={teacher.user_id} className="hover:shadow-md transition-shadow">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-semibold text-lg">
-                      {teacher.full_name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{teacher.full_name}</p>
-                      <p className="text-sm text-gray-500 truncate">{teacher.email}</p>
-                      <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3.5 w-3.5" />
-                          {teacher.class_section || "—"}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="h-3.5 w-3.5" />
-                          {teacher.department_id?.replace("DEPT-", "") || "—"}
-                        </span>
+              <Link key={teacher.user_id} href={`/admin/teachers/${teacher.user_id}`}>
+                <Card className="hover:shadow-md hover:border-primary-300 transition-all cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-semibold text-lg">
+                        {teacher.full_name.charAt(0)}
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{teacher.full_name}</p>
+                        <p className="text-sm text-gray-500 truncate">{teacher.email}</p>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-gray-600">
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3.5 w-3.5" />
+                            {teacher.class_section || "—"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="h-3.5 w-3.5" />
+                            {teacher.department_id?.replace("DEPT-", "") || "—"}
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowRight className="h-5 w-5 text-gray-300" />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

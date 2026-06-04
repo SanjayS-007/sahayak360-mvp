@@ -95,6 +95,7 @@ export const quizApi = {
   submit: (sessionId: string, responses: Array<{ question_id: string; answer: string }>) =>
     api.post("/quiz/submit", { session_id: sessionId, responses }),
   getSession: (sessionId: string) => api.get(`/quiz/${sessionId}`),
+  getPending: () => api.get("/quiz/sessions?status=pending"),
 };
 
 // --- Alerts & Interventions ---

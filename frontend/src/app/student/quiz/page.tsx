@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,50 +8,68 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { quizApi } from "@/lib/api";
-import { useAuthStore } from "@/store/auth-store";
-import { Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
-import type { QuizQuestion, QuizResult } from "@/types";
+import { Clock, CheckCircle, XCircle, Loader2, RefreshCw } from "lucide-react";
+
+interface QuizQuestion {
+  question_id: string;
+  question_text: string;
+  options: string[];
+  bloom_level?: string;
+  kc_id?: string;
+}
+
+interface QuizResult {
+  session_id: string;
+  score: number;
+  total_questions: number;
+  correct_count: number;
+  mastery_deltas: Record<string, number>;
+}
+
+interface PendingSession {
+  session_id: string;
+  student_id: string;
+  status: string;
+  target_kc_ids: string[];
+  dispatched_at: string | null;
+}
 
 type QuizState = "idle" | "active" | "submitted";
 
 export default function StudentQuizPage() {
-  const { user } = useAuthStore();
   const [state, setState] = useState<QuizState>("idle");
+  const [pendingSessions, setPendingSessions] = useState<PendingSession[]>([]);
   const [sessionId, setSessionId] = useState("");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<QuizResult | null>(null);
   const [timeLeft, setTimeLeft] = useState(600);
   const [isLoading, setIsLoading] = useState(false);
+  const [polling, setPolling] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
-  // WebSocket for real-time quiz delivery
-  useEffect(() => {
-    const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000"}/api/ws/student?token=${
-      typeof window !== "undefined" ? localStorage.getItem("sahayak_token") : ""
-    }`;
-
-    let ws: WebSocket | null = null;
+  // Poll for pending quizzes every 10 seconds
+  const checkPendingQuizzes = useCallback(async () => {
     try {
-      ws = new WebSocket(wsUrl);
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "quiz_dispatch") {
-          setSessionId(data.session_id);
-          setQuestions(data.questions);
-          setTimeLeft(data.time_limit_seconds || 600);
-          setState("active");
-          toast.info("New quiz assigned by your teacher!");
-        }
-      };
+      const { data } = await quizApi.getPending();
+      const pending = (data || []).filter((s: PendingSession) => s.status === "pending");
+      setPendingSessions(pending);
+      if (pending.length > 0 && state === "idle") {
+        toast.info("You have a pending quiz from your teacher!");
+      }
     } catch {
-      // WebSocket not available — quizzes via HTTP only
+      // Silent fail - will retry
     }
+  }, [state]);
 
+  useEffect(() => {
+    checkPendingQuizzes();
+    pollRef.current = setInterval(checkPendingQuizzes, 10000);
     return () => {
-      ws?.close();
+      if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, []);
+  }, [checkPendingQuizzes]);
 
   // Timer countdown
   useEffect(() => {
@@ -71,6 +89,24 @@ export default function StudentQuizPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
+
+  const startQuiz = async (pendingSessionId: string) => {
+    setIsLoading(true);
+    try {
+      const { data } = await quizApi.getSession(pendingSessionId);
+      setSessionId(data.session_id);
+      setQuestions(data.questions || []);
+      setTimeLeft(data.time_limit_seconds || 600);
+      setState("active");
+      setAnswers({});
+      // Stop polling while quiz is active
+      if (pollRef.current) clearInterval(pollRef.current);
+    } catch {
+      toast.error("Failed to load quiz");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -93,6 +129,12 @@ export default function StudentQuizPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    setPolling(true);
+    await checkPendingQuizzes();
+    setPolling(false);
+  };
+
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;
@@ -102,18 +144,52 @@ export default function StudentQuizPage() {
   return (
     <AppShell requiredRole="student">
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900">Assessment Quiz</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Assessment Quiz</h2>
+          {state === "idle" && (
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={polling}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${polling ? "animate-spin" : ""}`} />
+              Check for quizzes
+            </Button>
+          )}
+        </div>
 
-        {state === "idle" && (
+        {state === "idle" && pendingSessions.length === 0 && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Clock className="h-12 w-12 text-gray-300 mb-4" />
               <p className="text-lg font-medium text-gray-600">No active quiz</p>
               <p className="text-sm text-gray-400 mt-1">
-                Your teacher will send you a quiz when it&apos;s time
+                Your teacher will send you a quiz when it&apos;s time. Checking every 10 seconds...
               </p>
             </CardContent>
           </Card>
+        )}
+
+        {state === "idle" && pendingSessions.length > 0 && (
+          <div className="space-y-3">
+            {pendingSessions.map((session) => (
+              <Card key={session.session_id} className="border-primary-200 bg-primary-50/50">
+                <CardContent className="flex items-center justify-between py-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">Quiz Available</p>
+                    <p className="text-sm text-gray-500">
+                      Topics: {session.target_kc_ids?.join(", ") || "Mixed"}
+                    </p>
+                    {session.dispatched_at && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        Sent: {new Date(session.dispatched_at).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <Button onClick={() => startQuiz(session.session_id)} disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Start Quiz
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         {state === "active" && (
@@ -137,7 +213,7 @@ export default function StudentQuizPage() {
                     <CardTitle className="text-base">
                       Q{idx + 1}. {q.question_text}
                     </CardTitle>
-                    <Badge variant="outline" className="w-fit">{q.bloom_level}</Badge>
+                    {q.bloom_level && <Badge variant="outline" className="w-fit">{q.bloom_level}</Badge>}
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -189,12 +265,12 @@ export default function StudentQuizPage() {
                     <div key={kc} className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">{kc}</span>
                       <div className="flex items-center gap-1">
-                        {score >= 0.7 ? (
+                        {(score as number) >= 0.7 ? (
                           <CheckCircle className="h-4 w-4 text-accent-500" />
                         ) : (
                           <XCircle className="h-4 w-4 text-danger-400" />
                         )}
-                        <span className="font-medium">{Math.round(score * 100)}%</span>
+                        <span className="font-medium">{Math.round((score as number) * 100)}%</span>
                       </div>
                     </div>
                   ))}
@@ -208,6 +284,9 @@ export default function StudentQuizPage() {
                   setResult(null);
                   setAnswers({});
                   setQuestions([]);
+                  // Resume polling
+                  checkPendingQuizzes();
+                  pollRef.current = setInterval(checkPendingQuizzes, 10000);
                 }}
                 className="w-full"
               >
