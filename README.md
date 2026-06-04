@@ -1006,6 +1006,6 @@ npm run dev
 
 <div align="center">
 
-**Built for SIH 2025 — solving real problems in Indian education with production-grade engineering.**
+**Built for SAHAI 2026 — solving real problems in Indian education with production-grade engineering.**
 
 </div>
