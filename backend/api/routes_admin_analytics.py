@@ -7,7 +7,7 @@ from sqlalchemy import select, func, case, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies import require_role
-from db.session import get_db
+from db.postgres import get_db
 from db.models import (
     User,
     MasteryRecord,
