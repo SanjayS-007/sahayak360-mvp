@@ -20,6 +20,7 @@ import {
   Activity,
   Users,
 } from "lucide-react";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 
 interface AlertItem {
   student_id: string;
@@ -115,11 +116,21 @@ export default function TeacherAlertsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Alerts & Early Warnings</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Students requiring immediate attention based on multi-dimensional risk analysis
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Alerts & Early Warnings</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Students requiring immediate attention based on multi-dimensional risk analysis
+              </p>
+            </div>
+            <InfoTooltip
+              title="Risk Scoring & Early Warnings"
+              sections={[
+                { heading: "Why this feature", content: "Identifies struggling students BEFORE they fail — using the ABC risk model that combines Academic performance (mastery scores, gap count), Behavioral signals (attendance, engagement), and Cognitive indicators (learning velocity, knowledge gaps). Students are flagged early so you can intervene proactively." },
+                { heading: "Understanding risk scores", content: "Each student gets a composite score (0-100): Critical (55+) needs immediate intervention, High (40-54) needs targeted support, Moderate (25-39) needs monitoring, Low (<25) is on track. The ABC breakdown shows which dimension drives the risk — academic struggles vs. behavioral vs. cognitive overload." },
+                { heading: "How to use effectively", content: "Sort by Critical first. Click 'View Details' to see the full risk breakdown and MTSS plan. Use 'Send Quiz' to dispatch a diagnostic micro-test that pinpoints exact gaps. Contributing factors tell you WHY a student is at risk — address root causes, not just symptoms." },
+              ]}
+            />
           </div>
           <Badge variant="outline" className="text-sm px-3 py-1">
             {data?.class_section || "9-A"}

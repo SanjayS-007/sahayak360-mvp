@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 
 interface GraphNode {
   id: string;
@@ -465,9 +466,19 @@ export default function KnowledgeGraphPage() {
     <AppShell requiredRole="teacher">
       <div className="space-y-5">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Knowledge Graph</h2>
-            <p className="text-sm text-gray-500 mt-1">Student-KC mastery relationships · Hover to explore connections</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Knowledge Graph</h2>
+              <p className="text-sm text-gray-500 mt-1">Student-KC mastery relationships · Hover to explore connections</p>
+            </div>
+            <InfoTooltip
+              title="Knowledge Graph Visualization"
+              sections={[
+                { heading: "Why this feature", content: "Visualizes the entire learning ecosystem as an interactive network. Each student is connected to Knowledge Components (topics) they have been assessed on. The strength and color of connections reveal mastery levels at a glance — spotting clusters, isolated students, and topic bottlenecks that tables and charts cannot show." },
+                { heading: "Reading the graph", content: "Gold/Green/Blue/Red nodes are Knowledge Components (colored by domain: Algebra, Geometry, Statistics, Trigonometry). Purple nodes are students. Edge colors show mastery: RED = critical (<40%), AMBER = needs work (40-65%), LIME = good (65-85%), GREEN = mastered (85%+). Thicker, brighter edges mean stronger mastery. Nodes cluster naturally — students close to a KC have higher mastery in it." },
+                { heading: "How to use effectively", content: "Hover over any node to see its connections highlighted. Look for students floating far from KC nodes (disconnected = low mastery). Look for KC nodes surrounded by red edges (class-wide struggle). Use this to identify peer tutoring opportunities — strong students near a KC can help those far from it." },
+              ]}
+            />
           </div>
           <div className="flex gap-2">
             <Badge variant="outline" className="bg-indigo-50 border-indigo-200 text-indigo-700">{stats.students} Students</Badge>

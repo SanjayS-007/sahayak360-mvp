@@ -1,0 +1,110 @@
+{
+  "ALG-LINEAR-EQ": {
+    "kc_name": "Linear Equations",
+    "domain": "Algebra",
+    "real_world": "Linear equations model real-world scenarios like calculating monthly phone bills (fixed + per-minute charges), converting temperatures between Celsius and Fahrenheit, and predicting travel time based on speed and distance.",
+    "prerequisites": [],
+    "next_steps": ["ALG-QUAD-EQ", "ALG-POLYNOMIALS"],
+    "action": "Start with 5 basic slope-intercept problems, then try solving word problems that connect to everyday budgeting scenarios.",
+    "flashcard_concepts": ["Slope = rate of change (rise/run)", "y = mx + b → m is slope, b is y-intercept", "Parallel lines have equal slopes", "To solve: isolate the variable using inverse operations"]
+  },
+  "ALG-QUAD-EQ": {
+    "kc_name": "Quadratic Equations",
+    "domain": "Algebra",
+    "real_world": "Quadratic equations describe projectile motion (how high a ball goes when thrown), the shape of satellite dishes and bridges, and help businesses find the price point that maximizes profit.",
+    "prerequisites": ["ALG-LINEAR-EQ", "ALG-FACTORING"],
+    "next_steps": ["ALG-POLYNOMIALS", "ALG-FUNCTIONS"],
+    "action": "First ensure you can factor expressions comfortably, then practice the quadratic formula with real projectile motion problems.",
+    "flashcard_concepts": ["ax² + bx + c = 0 is standard form", "Quadratic formula: x = (-b ± √(b²-4ac)) / 2a", "Discriminant b²-4ac tells number of solutions", "Vertex form: a(x-h)² + k where (h,k) is the turning point"]
+  },
+  "ALG-FACTORING": {
+    "kc_name": "Factoring Expressions",
+    "domain": "Algebra",
+    "real_world": "Factoring helps simplify complex calculations in physics and engineering — like breaking down forces into components, simplifying circuit equations, and optimizing manufacturing dimensions.",
+    "prerequisites": ["ALG-LINEAR-EQ"],
+    "next_steps": ["ALG-QUAD-EQ"],
+    "action": "Practice finding GCF of terms first, then move to factoring trinomials using the AC method.",
+    "flashcard_concepts": ["GCF method: find greatest common factor of all terms", "Difference of squares: a²-b² = (a+b)(a-b)", "Trinomial: find two numbers that multiply to ac and add to b", "Always check by expanding back"]
+  },
+  "ALG-POLYNOMIALS": {
+    "kc_name": "Polynomials",
+    "domain": "Algebra",
+    "real_world": "Polynomials model population growth curves, the trajectory of roller coasters, and are used in computer graphics to create smooth curves and animations in games and movies.",
+    "prerequisites": ["ALG-LINEAR-EQ", "ALG-QUAD-EQ"],
+    "next_steps": ["ALG-FUNCTIONS"],
+    "action": "Start by classifying polynomials by degree, then practice addition and multiplication before attempting division.",
+    "flashcard_concepts": ["Degree = highest exponent", "Leading coefficient affects end behavior", "Add/subtract by combining like terms", "Multiply using distributive property (FOIL for binomials)"]
+  },
+  "ALG-FUNCTIONS": {
+    "kc_name": "Functions & Relations",
+    "domain": "Algebra",
+    "real_world": "Functions are everywhere — your phone's brightness adjusting to ambient light, Spotify's recommendation algorithm, and how your heart rate responds to exercise intensity are all functions.",
+    "prerequisites": ["ALG-LINEAR-EQ", "ALG-POLYNOMIALS"],
+    "next_steps": ["TRIG-BASIC"],
+    "action": "Map out input-output tables for daily situations, then practice identifying domain and range from graphs.",
+    "flashcard_concepts": ["Function: each input has exactly one output", "Domain = set of valid inputs, Range = set of possible outputs", "Vertical line test for graphs", "f(x) notation: f is the rule, x is the input"]
+  },
+  "GEO-TRIANGLES": {
+    "kc_name": "Triangle Properties",
+    "domain": "Geometry",
+    "real_world": "Triangles are the strongest shape in engineering — used in bridge trusses, roof structures, crane arms, and even in how GPS satellites triangulate your phone's location.",
+    "prerequisites": [],
+    "next_steps": ["GEO-CIRCLES", "TRIG-BASIC"],
+    "action": "Start with angle-sum property (180°), then practice classifying triangles and using Pythagoras for right triangles.",
+    "flashcard_concepts": ["Angle sum = 180°", "Pythagoras: a² + b² = c² (right triangles only)", "Types: equilateral (60-60-60), isosceles (2 equal), scalene (all different)", "Area = ½ × base × height"]
+  },
+  "GEO-CIRCLES": {
+    "kc_name": "Circle Geometry",
+    "domain": "Geometry",
+    "real_world": "Circle geometry is used in wheel and gear design, calculating satellite orbits, designing sports fields and running tracks, and in architecture for domes and arches.",
+    "prerequisites": ["GEO-TRIANGLES"],
+    "next_steps": ["GEO-COORDINATE"],
+    "action": "Memorize key formulas (circumference, area), then practice problems involving arcs, sectors, and tangent lines.",
+    "flashcard_concepts": ["Circumference = 2πr, Area = πr²", "Arc length = (θ/360) × 2πr", "Tangent is perpendicular to radius at point of contact", "Inscribed angle = half central angle"]
+  },
+  "GEO-COORDINATE": {
+    "kc_name": "Coordinate Geometry",
+    "domain": "Geometry",
+    "real_world": "Coordinate geometry powers Google Maps navigation, drone flight path planning, game character movement systems, and how architects plan building layouts on plots.",
+    "prerequisites": ["ALG-LINEAR-EQ", "GEO-TRIANGLES"],
+    "next_steps": ["GEO-CIRCLES"],
+    "action": "Practice plotting points and finding distances, then move to midpoint formula and equations of lines between points.",
+    "flashcard_concepts": ["Distance = √((x₂-x₁)² + (y₂-y₁)²)", "Midpoint = ((x₁+x₂)/2, (y₁+y₂)/2)", "Slope between points = (y₂-y₁)/(x₂-x₁)", "Section formula for dividing a line segment"]
+  },
+  "STAT-MEASURES": {
+    "kc_name": "Measures of Central Tendency",
+    "domain": "Statistics",
+    "real_world": "Statistics helps you understand cricket batting averages, compare exam performances across schools, analyze Instagram engagement rates, and make sense of COVID data trends.",
+    "prerequisites": [],
+    "next_steps": ["STAT-PROBABILITY"],
+    "action": "Practice calculating mean, median, mode on small datasets, then try interpreting which measure best represents real scenarios.",
+    "flashcard_concepts": ["Mean = sum of values / count", "Median = middle value when sorted (average of two middles if even count)", "Mode = most frequent value", "Mean is affected by outliers, median is resistant"]
+  },
+  "STAT-PROBABILITY": {
+    "kc_name": "Probability Fundamentals",
+    "domain": "Statistics",
+    "real_world": "Probability helps predict weather forecasts, assess risk in medical treatments, calculate odds in games, and is the foundation of AI and machine learning predictions.",
+    "prerequisites": ["STAT-MEASURES"],
+    "next_steps": [],
+    "action": "Start with simple single-event probabilities (coins, dice), then progress to combined events and conditional probability.",
+    "flashcard_concepts": ["P(event) = favorable outcomes / total outcomes", "0 ≤ P ≤ 1, where 0=impossible, 1=certain", "P(A or B) = P(A) + P(B) - P(A and B)", "Independent events: P(A and B) = P(A) × P(B)"]
+  },
+  "TRIG-BASIC": {
+    "kc_name": "Trigonometric Ratios",
+    "domain": "Trigonometry",
+    "real_world": "Trigonometry is used in music production (sound waves), measuring building heights without climbing them, in video game physics for character animations, and in navigation by ships and aircraft.",
+    "prerequisites": ["GEO-TRIANGLES", "ALG-FUNCTIONS"],
+    "next_steps": ["TRIG-IDENTITIES"],
+    "action": "Master SOH-CAH-TOA with right triangle diagrams first, then practice finding angles and sides in real measurement problems.",
+    "flashcard_concepts": ["sin θ = opposite/hypotenuse", "cos θ = adjacent/hypotenuse", "tan θ = opposite/adjacent", "SOH-CAH-TOA mnemonic, works for right triangles only"]
+  },
+  "TRIG-IDENTITIES": {
+    "kc_name": "Trigonometric Identities",
+    "domain": "Trigonometry",
+    "real_world": "Trig identities simplify complex calculations in electrical engineering (AC circuits), signal processing (noise reduction in audio), and physics (wave interference patterns).",
+    "prerequisites": ["TRIG-BASIC"],
+    "next_steps": [],
+    "action": "Start by proving sin²θ + cos²θ = 1 geometrically, then practice simplifying expressions using basic identities before attempting proofs.",
+    "flashcard_concepts": ["sin²θ + cos²θ = 1 (Pythagorean identity)", "tan θ = sin θ / cos θ", "sin(A+B) = sinA·cosB + cosA·sinB", "cos(A+B) = cosA·cosB - sinA·sinB"]
+  }
+}

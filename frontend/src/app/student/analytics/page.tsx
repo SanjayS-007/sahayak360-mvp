@@ -17,7 +17,14 @@ import {
   BookOpen,
   Trophy,
   BarChart3,
+  CalendarDays,
+  Users,
+  GitBranch,
+  Rocket,
+  Clock,
+  MapPin,
 } from "lucide-react";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import {
   RadarChart,
   Radar,
@@ -47,6 +54,11 @@ interface AnalyticsData {
   gaps: Array<{ kc_id: string; kc_name: string; mastery: number }>;
   strengths: Array<{ kc_id: string; kc_name: string; mastery: number }>;
   timeline: Array<{ date: string; score: number }>;
+  prediction?: { mastery_2weeks: number; velocity: number; trajectory: string };
+  study_metrics?: { total_sessions: number; avg_session_duration_min: number; most_active_day: string; optimal_time: string };
+  peer_comparison?: { class_avg_mastery: number; percentile_rank: number; similar_students_improvement: string };
+  cross_topic_insights?: Array<{ topic_a: string; topic_b: string; correlation: string; recommendation: string }>;
+  gap_context?: Array<{ kc_id: string; kc_name: string; mastery: number; real_world: string; prerequisites: string[]; action: string; next_steps: string[] }>;
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
@@ -266,17 +278,51 @@ export default function StudentAnalyticsPage() {
 
         {/* Gaps & Strengths */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Gaps */}
+          {/* Natural Improvement Plan */}
           <Card className="shadow-md border-t-4 border-t-red-400">
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base text-red-600">
-                <Zap className="h-5 w-5" />
-                Focus Areas
-              </CardTitle>
-              <p className="text-xs text-gray-500">Topics that need more practice</p>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base text-red-600">
+                  <Zap className="h-5 w-5" />
+                  Your Growth Areas
+                </CardTitle>
+                <InfoTooltip
+                  title="Understanding Your Growth Areas"
+                  sections={[
+                    { heading: "Why this matters", content: "These are not failures — they are your biggest opportunities for growth. Each area connects to real-world skills and has a clear path forward." },
+                    { heading: "How to improve", content: "Start with the topic that has the most prerequisites listed — strengthening foundations accelerates progress in everything above. Practice at basic level first, then move up." },
+                    { heading: "Reading the details", content: "Real-world connection shows where this topic is used in life. Prerequisites are topics to strengthen first. The action step gives you an immediate next move." },
+                  ]}
+                />
+              </div>
             </CardHeader>
             <CardContent>
-              {data.gaps.length > 0 ? (
+              {(data.gap_context && data.gap_context.length > 0) ? (
+                <div className="space-y-4">
+                  {data.gap_context.map((g) => (
+                    <div key={g.kc_id} className="rounded-lg border border-red-100 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-900">{g.kc_name}</p>
+                        <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">
+                          {formatPercentage(g.mastery)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 leading-relaxed">
+                        <MapPin className="inline h-3 w-3 mr-1 text-indigo-400" />
+                        {g.real_world}
+                      </p>
+                      {g.prerequisites.length > 0 && (
+                        <p className="text-xs text-amber-700 bg-amber-50 rounded px-2 py-1">
+                          <strong>Build on:</strong> {g.prerequisites.join(", ")} → then this becomes easier
+                        </p>
+                      )}
+                      <p className="text-xs text-indigo-700 bg-indigo-50 rounded px-2 py-1">
+                        <strong>Next step:</strong> {g.action}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : data.gaps.length > 0 ? (
                 <div className="space-y-3">
                   {data.gaps.map((g) => (
                     <div key={g.kc_id} className="flex items-center gap-3">
@@ -341,6 +387,104 @@ export default function StudentAnalyticsPage() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        {/* Enhanced Analytics Section */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {/* Prediction Card */}
+          {data.prediction && (
+            <Card className="shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm text-gray-600">
+                  <Rocket className="h-4 w-4 text-indigo-500" />
+                  2-Week Forecast
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-gray-900">{data.prediction.mastery_2weeks}%</p>
+                <div className="flex items-center gap-1 mt-1">
+                  {data.prediction.trajectory === "improving" ? (
+                    <TrendingUp className="h-3 w-3 text-emerald-500" />
+                  ) : data.prediction.trajectory === "declining" ? (
+                    <TrendingDown className="h-3 w-3 text-red-500" />
+                  ) : (
+                    <Minus className="h-3 w-3 text-gray-400" />
+                  )}
+                  <span className={`text-xs font-medium ${
+                    data.prediction.trajectory === "improving" ? "text-emerald-600" :
+                    data.prediction.trajectory === "declining" ? "text-red-600" : "text-gray-500"
+                  }`}>
+                    {data.prediction.trajectory === "improving" ? "On the rise" :
+                     data.prediction.trajectory === "declining" ? "Needs attention" : "Steady pace"}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Based on your recent performance trend</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Study Metrics Card */}
+          {data.study_metrics && (
+            <Card className="shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                  Study Patterns
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Total sessions</span>
+                  <span className="font-semibold">{data.study_metrics.total_sessions}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Most active</span>
+                  <span className="font-semibold">{data.study_metrics.most_active_day}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Best time</span>
+                  <span className="font-semibold">{data.study_metrics.optimal_time}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Peer Comparison Card */}
+          {data.peer_comparison && (
+            <Card className="shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm text-gray-600">
+                  <Users className="h-4 w-4 text-blue-500" />
+                  Class Standing
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-gray-900">Top {100 - data.peer_comparison.percentile_rank}%</p>
+                <p className="text-xs text-gray-500 mt-1">Class avg: {data.peer_comparison.class_avg_mastery}%</p>
+                <p className="text-xs text-blue-600 mt-2 leading-relaxed">{data.peer_comparison.similar_students_improvement}</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Cross-Topic Insights Card */}
+          {data.cross_topic_insights && data.cross_topic_insights.length > 0 && (
+            <Card className="shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-sm text-gray-600">
+                  <GitBranch className="h-4 w-4 text-purple-500" />
+                  Topic Connections
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {data.cross_topic_insights.slice(0, 2).map((insight, i) => (
+                  <div key={i} className="text-xs">
+                    <p className="font-medium text-gray-700">{insight.topic_a} ↔ {insight.topic_b}</p>
+                    <p className="text-gray-500 mt-0.5">{insight.recommendation}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </AppShell>

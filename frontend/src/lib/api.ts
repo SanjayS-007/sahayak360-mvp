@@ -84,6 +84,8 @@ export const queryApi = {
     api.get(`/query/student/${studentId}/insights`),
   classPatterns: (classSection: string, subject?: string) =>
     api.get(`/query/class/${classSection}/patterns${subject ? `?subject=${subject}` : ""}`),
+  classPatternsComputed: (classSection: string, subject?: string) =>
+    api.get(`/query/class/${classSection}/patterns-computed${subject ? `?subject=${subject}` : ""}`),
 };
 
 // --- Quiz ---

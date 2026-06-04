@@ -9,7 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { dashboardApi, queryApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { formatPercentage, getRiskBadgeColor } from "@/lib/utils";
-import { Users, AlertTriangle, ClipboardList, TrendingUp, Sparkles, Brain } from "lucide-react";
+import { Users, AlertTriangle, ClipboardList, TrendingUp, Sparkles, Brain, Target, TrendingDown, GitBranch, Layers } from "lucide-react";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 import type { ClassAnalytics } from "@/types";
 
 export default function TeacherDashboard() {
@@ -27,8 +28,8 @@ export default function TeacherDashboard() {
       const classSection = user?.class_section || "9-A";
       const { data } = await dashboardApi.teacherOverview(classSection);
       setAnalytics(data);
-      // Load AI patterns (non-blocking)
-      queryApi.classPatterns(classSection).then(r => setPatterns(r.data)).catch(() => {});
+      // Load AI patterns (non-blocking) — use computed endpoint
+      queryApi.classPatternsComputed(classSection).then(r => setPatterns(r.data)).catch(() => {});
     } catch {
       toast.error("Failed to load dashboard data");
     } finally {
@@ -138,27 +139,41 @@ export default function TeacherDashboard() {
         </Card>
 
         {/* AI Class Patterns */}
-        {patterns && (
-          <Card className="border-t-4 border-t-indigo-400">
-            <CardHeader>
+        <Card className="border-t-4 border-t-indigo-400">
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-indigo-500" />
                 AI-Detected Class Patterns
               </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {patterns.summary && (
-                <div className="rounded-lg bg-indigo-50/50 p-3">
-                  <p className="text-sm text-gray-700 leading-relaxed">{patterns.summary}</p>
-                </div>
-              )}
-              {patterns.patterns?.length > 0 && (
-                <div className="space-y-2">
-                  {patterns.patterns.slice(0, 5).map((p: any, idx: number) => (
+              <InfoTooltip
+                title="AI-Detected Class Patterns"
+                sections={[
+                  { heading: "Why this feature", content: "Automatically analyzes mastery data across all students to surface hidden patterns — struggling topics, correlated weaknesses, declining performance, and achievement gaps — that would take hours to identify manually." },
+                  { heading: "What you get", content: "Actionable insights with severity levels. Each pattern tells you how many students are affected and whether it needs immediate attention (high severity) or monitoring (medium). Patterns include: class-wide gaps, cross-topic correlations, declining trends, and prerequisite breakdowns." },
+                  { heading: "How to use effectively", content: "Check patterns weekly after new assessments. High-severity patterns need immediate intervention (consider group remediation or targeted quizzes). Medium-severity patterns inform your lesson planning for the coming week. Use correlation patterns to address root causes rather than symptoms." },
+                ]}
+              />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {patterns?.summary && (
+              <div className="rounded-lg bg-indigo-50/50 p-3">
+                <p className="text-sm text-gray-700 leading-relaxed">{patterns.summary}</p>
+              </div>
+            )}
+            {patterns?.patterns?.length > 0 ? (
+              <div className="space-y-2">
+                {patterns.patterns.slice(0, 6).map((p: any, idx: number) => {
+                  const PatternIcon = p.pattern_type === "decline" ? TrendingDown :
+                    p.pattern_type === "correlation" ? GitBranch :
+                    p.pattern_type === "prerequisite" ? Layers :
+                    p.pattern_type === "cluster" ? Users : Target;
+                  return (
                     <div key={idx} className="flex items-start gap-3 rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors">
-                      <Sparkles className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                      <PatternIcon className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{p.pattern || p.insight || p.description}</p>
+                        <p className="text-sm font-medium text-gray-900">{p.insight || p.pattern || p.description}</p>
                         {p.affected_students && (
                           <p className="text-xs text-gray-500 mt-0.5">
                             Affects {p.affected_students} student{p.affected_students > 1 ? "s" : ""}
@@ -175,15 +190,19 @@ export default function TeacherDashboard() {
                         </Badge>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
-              {!patterns.patterns?.length && !patterns.summary && (
-                <p className="text-sm text-gray-400">Patterns will appear as more data is collected.</p>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">Analyzing data... Patterns will appear once enough assessments are recorded.</p>
+            )}
+            {patterns?.analyzed_at && (
+              <p className="text-xs text-gray-400 text-right">
+                Last analyzed: {new Date(patterns.analyzed_at).toLocaleString()}
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppShell>
   );

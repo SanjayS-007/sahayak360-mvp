@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
+import { InfoTooltip } from "@/components/shared/info-tooltip";
 
 interface Ticket {
   ticket_id: string;
@@ -132,11 +133,21 @@ export default function TeacherInterventionsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Intervention Command Center</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Track and manage student support actions across their lifecycle
-            </p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Intervention Command Center</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Track and manage student support actions across their lifecycle
+              </p>
+            </div>
+            <InfoTooltip
+              title="Intervention Command Center"
+              sections={[
+                { heading: "Why this feature", content: "When the system detects a student at risk (through declining scores, multiple knowledge gaps, or behavioral signals), intervention tickets are automatically created. This board helps you track each support action from creation to resolution." },
+                { heading: "How it works", content: "Tickets move through stages: Open (newly created, awaiting assignment) → In Progress (you are actively working on the intervention — remediation, quiz, parent meeting) → Awaiting Evidence (intervention done, waiting for the next assessment to confirm improvement) → Resolved (student showed measurable improvement). Each ticket has a priority (P1=urgent, P4=routine) and a type (Micro Test, Remediation, Parent Meeting, etc.)." },
+                { heading: "How to use effectively", content: "Focus on P1/P2 tickets first. Click the action button on each card to move it to the next stage. Add notes when transitioning to document what you did. Check 'Awaiting Evidence' tickets after new quiz results come in — if the student improved, resolve the ticket. If not, consider escalating to a different intervention type." },
+              ]}
+            />
           </div>
           {stats && (
             <div className="flex gap-3">
