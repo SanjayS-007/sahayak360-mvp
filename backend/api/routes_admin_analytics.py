@@ -66,7 +66,7 @@ async def section_comparison(
         select(
             User.class_section,
             func.count(func.distinct(User.id)).label("student_count"),
-            func.avg(MasteryRecord.p_mastery).label("avg_mastery"),
+            func.avg(MasteryRecord.mastery).label("avg_mastery"),
         )
         .outerjoin(MasteryRecord, MasteryRecord.student_id == User.user_id)
         .where(User.role == "student")
@@ -213,7 +213,7 @@ async def teacher_profile(
 
     # Get avg mastery for teacher's class
     mastery_result = await db.execute(
-        select(func.avg(MasteryRecord.p_mastery)).where(
+        select(func.avg(MasteryRecord.mastery)).where(
             MasteryRecord.student_id.in_(
                 select(User.user_id).where(
                     User.role == "student",
