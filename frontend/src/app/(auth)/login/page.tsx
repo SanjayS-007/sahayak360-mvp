@@ -31,6 +31,7 @@ export default function LoginPage() {
         email,
         full_name: resp.full_name,
         role: resp.role,
+        class_section: resp.class_section,
       };
       login(resp.access_token, user);
       toast.success("Welcome back!");

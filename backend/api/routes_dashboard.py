@@ -20,12 +20,30 @@ from db.postgres import get_db
 router = APIRouter()
 
 
+class RiskDistribution(BaseModel):
+    low: int = 0
+    moderate: int = 0
+    high: int = 0
+    critical: int = 0
+
+
+class StrugglingKC(BaseModel):
+    kc_id: str
+    kc_name: str
+    avg_mastery: float
+    student_count: int = 0
+
+
 class ClassOverview(BaseModel):
     total_students: int
     avg_mastery: float
+    class_avg_mastery: float = 0.0
     at_risk_count: int
     pending_tickets: int
     recent_events: int
+    risk_distribution: RiskDistribution = RiskDistribution()
+    struggling_kcs: list[StrugglingKC] = []
+    open_tickets: int = 0
 
 
 class StudentSummary(BaseModel):
@@ -114,10 +132,74 @@ async def teacher_overview(
     return ClassOverview(
         total_students=total_students,
         avg_mastery=avg_mastery,
+        class_avg_mastery=avg_mastery,
         at_risk_count=at_risk_count,
         pending_tickets=pending_tickets,
+        open_tickets=pending_tickets,
         recent_events=recent_events,
+        risk_distribution=await _compute_risk_distribution(db, class_section, subject),
+        struggling_kcs=await _compute_struggling_kcs(db, class_section, subject),
     )
+
+
+async def _compute_risk_distribution(db: AsyncSession, class_section: str, subject: str) -> RiskDistribution:
+    """Compute risk tier distribution for all students in a class."""
+    student_ids_q = select(User.user_id).where(
+        User.class_section == class_section, User.role == "student"
+    )
+    # Get average mastery per student
+    result = await db.execute(
+        select(
+            MasteryRecord.student_id,
+            func.avg(MasteryRecord.mastery).label("avg_m"),
+        )
+        .where(
+            MasteryRecord.subject == subject,
+            MasteryRecord.student_id.in_(student_ids_q),
+        )
+        .group_by(MasteryRecord.student_id)
+    )
+    rows = result.all()
+    dist = RiskDistribution()
+    for row in rows:
+        avg_m = row.avg_m or 0
+        if avg_m >= 0.7:
+            dist.low += 1
+        elif avg_m >= 0.5:
+            dist.moderate += 1
+        elif avg_m >= 0.3:
+            dist.high += 1
+        else:
+            dist.critical += 1
+    return dist
+
+
+async def _compute_struggling_kcs(db: AsyncSession, class_section: str, subject: str) -> list[StrugglingKC]:
+    """Find KCs where class average mastery is below 0.5."""
+    student_ids_q = select(User.user_id).where(
+        User.class_section == class_section, User.role == "student"
+    )
+    result = await db.execute(
+        select(
+            MasteryRecord.kc_id,
+            MasteryRecord.kc_name,
+            func.avg(MasteryRecord.mastery).label("avg_m"),
+            func.count(func.distinct(MasteryRecord.student_id)).label("cnt"),
+        )
+        .where(
+            MasteryRecord.subject == subject,
+            MasteryRecord.student_id.in_(student_ids_q),
+        )
+        .group_by(MasteryRecord.kc_id, MasteryRecord.kc_name)
+        .having(func.avg(MasteryRecord.mastery) < 0.5)
+        .order_by(func.avg(MasteryRecord.mastery))
+        .limit(10)
+    )
+    rows = result.all()
+    return [
+        StrugglingKC(kc_id=r.kc_id, kc_name=r.kc_name or r.kc_id, avg_mastery=round(r.avg_m, 3), student_count=r.cnt)
+        for r in rows
+    ]
 
 
 @router.get("/teacher/students", response_model=list[StudentSummary])

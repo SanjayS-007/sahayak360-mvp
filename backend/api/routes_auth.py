@@ -41,6 +41,7 @@ class TokenResponse(BaseModel):
     user_id: str
     role: str
     full_name: str
+    class_section: str | None = None
 
 
 class UserProfile(BaseModel):
@@ -85,6 +86,7 @@ async def register(req: RegisterRequest, db: AsyncSession = Depends(get_db)):
         user_id=user.user_id,
         role=user.role,
         full_name=user.full_name,
+        class_section=user.class_section,
     )
 
 
@@ -111,6 +113,7 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
         user_id=user.user_id,
         role=user.role,
         full_name=user.full_name,
+        class_section=user.class_section,
     )
 
 

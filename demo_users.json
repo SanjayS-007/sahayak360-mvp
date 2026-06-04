@@ -1,0 +1,210 @@
+{
+  "platform": {
+    "frontend": "https://sahayak360-mvp.vercel.app",
+    "api": "https://sahayak360-api.onrender.com",
+    "api_docs": "https://sahayak360-api.onrender.com/docs"
+  },
+  "password_for_all": "Demo@2026Secure",
+  "teachers": [
+    {
+      "email": "teacher1@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "TCH-1001",
+      "full_name": "Ms. Priya Sharma",
+      "class_section": "9-A",
+      "subject": "mathematics"
+    },
+    {
+      "email": "teacher2@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "TCH-1002",
+      "full_name": "Mr. Rajesh Kumar",
+      "class_section": "9-B",
+      "subject": "mathematics"
+    },
+    {
+      "email": "teacher3@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "TCH-1003",
+      "full_name": "Ms. Anita Desai",
+      "class_section": "9-A",
+      "subject": "mathematics"
+    }
+  ],
+  "students": [
+    {
+      "email": "student1@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2001",
+      "full_name": "Aarav Patel",
+      "class_section": "9-A",
+      "performance_level": "struggling"
+    },
+    {
+      "email": "student2@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2002",
+      "full_name": "Diya Gupta",
+      "class_section": "9-A",
+      "performance_level": "moderate"
+    },
+    {
+      "email": "student3@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2003",
+      "full_name": "Arjun Nair",
+      "class_section": "9-A",
+      "performance_level": "struggling"
+    },
+    {
+      "email": "student4@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2004",
+      "full_name": "Ananya Reddy",
+      "class_section": "9-A",
+      "performance_level": "good"
+    },
+    {
+      "email": "student5@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2005",
+      "full_name": "Vivaan Singh",
+      "class_section": "9-A",
+      "performance_level": "excellent"
+    },
+    {
+      "email": "student6@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2006",
+      "full_name": "Ishita Sharma",
+      "class_section": "9-A",
+      "performance_level": "moderate"
+    },
+    {
+      "email": "student7@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2007",
+      "full_name": "Rohan Mehta",
+      "class_section": "9-A",
+      "performance_level": "good"
+    },
+    {
+      "email": "student8@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2008",
+      "full_name": "Kavya Iyer",
+      "class_section": "9-A",
+      "performance_level": "excellent"
+    },
+    {
+      "email": "student9@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2009",
+      "full_name": "Aditya Joshi",
+      "class_section": "9-B",
+      "performance_level": "moderate"
+    },
+    {
+      "email": "student10@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2010",
+      "full_name": "Meera Krishnan",
+      "class_section": "9-B",
+      "performance_level": "good"
+    }
+  ],
+  "admins": [
+    {
+      "email": "admin1@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "ADM-3001",
+      "full_name": "Dr. Suresh Menon"
+    },
+    {
+      "email": "admin2@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "ADM-3002",
+      "full_name": "Ms. Lakshmi Rao"
+    }
+  ],
+  "knowledge_components": [
+    {
+      "id": "ALG-001",
+      "name": "Linear Equations",
+      "subject": "mathematics"
+    },
+    {
+      "id": "ALG-002",
+      "name": "Quadratic Equations",
+      "subject": "mathematics"
+    },
+    {
+      "id": "ALG-003",
+      "name": "Polynomials",
+      "subject": "mathematics"
+    },
+    {
+      "id": "ALG-004",
+      "name": "Factorization",
+      "subject": "mathematics"
+    },
+    {
+      "id": "GEO-001",
+      "name": "Triangles & Congruence",
+      "subject": "mathematics"
+    },
+    {
+      "id": "GEO-002",
+      "name": "Coordinate Geometry",
+      "subject": "mathematics"
+    },
+    {
+      "id": "GEO-003",
+      "name": "Circles & Theorems",
+      "subject": "mathematics"
+    },
+    {
+      "id": "STAT-001",
+      "name": "Mean, Median, Mode",
+      "subject": "mathematics"
+    },
+    {
+      "id": "STAT-002",
+      "name": "Probability Basics",
+      "subject": "mathematics"
+    },
+    {
+      "id": "TRIG-001",
+      "name": "Trigonometric Ratios",
+      "subject": "mathematics"
+    }
+  ],
+  "data_coverage": {
+    "weeks_of_history": 4,
+    "assessments_per_student_per_week": "4-6 KCs tested",
+    "total_assessments": "~50 assessment events",
+    "subjects": [
+      "mathematics"
+    ],
+    "classes": [
+      "9-A",
+      "9-B"
+    ]
+  },
+  "demo_scenarios": {
+    "struggling_students": [
+      "student1@school.com (Aarav)",
+      "student3@school.com (Arjun)"
+    ],
+    "top_performers": [
+      "student5@school.com (Vivaan)",
+      "student8@school.com (Kavya)"
+    ],
+    "improving_students": [
+      "student2@school.com (Diya)",
+      "student6@school.com (Ishita)"
+    ],
+    "teacher_9A": "teacher1@school.com (Ms. Priya Sharma)",
+    "teacher_9B": "teacher2@school.com (Mr. Rajesh Kumar)"
+  }
+}

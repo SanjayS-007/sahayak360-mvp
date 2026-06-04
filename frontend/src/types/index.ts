@@ -15,6 +15,7 @@ export interface LoginResponse {
   user_id: string;
   role: "teacher" | "student" | "admin" | "parent";
   full_name: string;
+  class_section?: string;
 }
 
 // --- Score Item ---
