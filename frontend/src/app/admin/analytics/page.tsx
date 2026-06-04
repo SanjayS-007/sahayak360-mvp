@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/shared/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { dashboardApi } from "@/lib/api";
+import { dashboardApi, adminAnalyticsApi } from "@/lib/api";
 import {
   BarChart3,
   TrendingUp,
@@ -37,6 +37,9 @@ interface AdminData {
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AdminData | null>(null);
+  const [effectiveness, setEffectiveness] = useState<any>(null);
+  const [workload, setWorkload] = useState<any>(null);
+  const [heatmap, setHeatmap] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +50,10 @@ export default function AdminAnalyticsPage() {
     try {
       const { data: overview } = await dashboardApi.adminOverview();
       setData(overview);
+      // Load analytics in parallel (non-blocking)
+      adminAnalyticsApi.effectiveness().then(r => setEffectiveness(r.data)).catch(() => {});
+      adminAnalyticsApi.teacherWorkload().then(r => setWorkload(r.data)).catch(() => {});
+      adminAnalyticsApi.riskHeatmap().then(r => setHeatmap(r.data)).catch(() => {});
     } catch {
       toast.error("Failed to load analytics");
     } finally {
@@ -54,24 +61,35 @@ export default function AdminAnalyticsPage() {
     }
   }
 
-  // Mock data for visualizations (computed from available data)
-  const riskHeatmapData = [
-    { section: "9-A", math: 45, science: 28, english: 32 },
-    { section: "9-B", math: 58, science: 42, english: 38 },
-  ];
-
-  const interventionEffectiveness = [
-    { type: "Micro Test", improvement: 15, count: 12 },
-    { type: "Remediation", improvement: 12, count: 8 },
-    { type: "Peer Tutor", improvement: 9, count: 5 },
-    { type: "Parent Mtg", improvement: 6, count: 3 },
-  ];
+  // Chart data (from API with fallback)
+  const interventionEffectiveness = effectiveness?.by_type?.length > 0
+    ? effectiveness.by_type.map((t: any) => ({
+        type: t.type,
+        improvement: t.estimated_improvement,
+        count: t.total_created,
+      }))
+    : [
+        { type: "Micro Test", improvement: 15, count: 12 },
+        { type: "Remediation", improvement: 12, count: 8 },
+        { type: "Peer Tutor", improvement: 9, count: 5 },
+        { type: "Parent Mtg", improvement: 6, count: 3 },
+      ];
 
   const riskDistribution = [
     { name: "Low", value: 8, color: "#10b981" },
     { name: "Moderate", value: 5, color: "#f59e0b" },
     { name: "High", value: 3, color: "#f97316" },
     { name: "Critical", value: 2, color: "#ef4444" },
+  ];
+
+  const teacherWorkloadData = workload?.teachers || [
+    { name: "Teacher 1", open_tickets: 12, urgent_tickets: 3, class_section: "9-A" },
+    { name: "Teacher 2", open_tickets: 8, urgent_tickets: 1, class_section: "9-B" },
+  ];
+
+  const heatmapSections = heatmap?.sections || [
+    { section: "9-A", risk_percentage: 45, total_students: 13 },
+    { section: "9-B", risk_percentage: 32, total_students: 5 },
   ];
 
   if (loading) {
@@ -200,7 +218,7 @@ export default function AdminAnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <BarChart3 className="h-5 w-5 text-indigo-500" />
-              Risk Heatmap (Section × Subject)
+              Risk Heatmap (Section)
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -209,23 +227,17 @@ export default function AdminAnalyticsPage() {
                 <thead>
                   <tr className="text-gray-500">
                     <th className="text-left py-2 px-3 font-medium">Section</th>
-                    <th className="text-center py-2 px-3 font-medium">Mathematics</th>
-                    <th className="text-center py-2 px-3 font-medium">Science</th>
-                    <th className="text-center py-2 px-3 font-medium">English</th>
+                    <th className="text-center py-2 px-3 font-medium">Students</th>
+                    <th className="text-center py-2 px-3 font-medium">Risk %</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {riskHeatmapData.map((row) => (
+                  {heatmapSections.map((row: any) => (
                     <tr key={row.section} className="border-t">
                       <td className="py-3 px-3 font-medium text-gray-900">{row.section}</td>
+                      <td className="text-center py-3 px-3">{row.total_students}</td>
                       <td className="text-center py-3 px-3">
-                        <HeatCell value={row.math} />
-                      </td>
-                      <td className="text-center py-3 px-3">
-                        <HeatCell value={row.science} />
-                      </td>
-                      <td className="text-center py-3 px-3">
-                        <HeatCell value={row.english} />
+                        <HeatCell value={row.risk_percentage} />
                       </td>
                     </tr>
                   ))}
@@ -242,23 +254,19 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {[
-                { name: "Teacher 1", tickets: 12, urgent: 3, students: 13 },
-                { name: "Teacher 2", tickets: 8, urgent: 1, students: 5 },
-                { name: "Teacher 3", tickets: 5, urgent: 0, students: 10 },
-              ].map((teacher) => (
+              {teacherWorkloadData.map((teacher: any) => (
                 <div key={teacher.name} className="flex items-center gap-4 rounded-lg border p-3">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">{teacher.name}</p>
-                    <p className="text-xs text-gray-500">{teacher.students} students</p>
+                    <p className="text-xs text-gray-500">{teacher.class_section}</p>
                   </div>
                   <div className="flex gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {teacher.tickets} tickets
+                      {teacher.open_tickets} tickets
                     </Badge>
-                    {teacher.urgent > 0 && (
+                    {teacher.urgent_tickets > 0 && (
                       <Badge className="bg-red-100 text-red-700 text-xs">
-                        {teacher.urgent} urgent
+                        {teacher.urgent_tickets} urgent
                       </Badge>
                     )}
                   </div>

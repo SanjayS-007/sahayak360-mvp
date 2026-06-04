@@ -6,15 +6,16 @@ import { AppShell } from "@/components/shared/app-shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { dashboardApi } from "@/lib/api";
+import { dashboardApi, queryApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth-store";
 import { formatPercentage, getRiskBadgeColor } from "@/lib/utils";
-import { Users, AlertTriangle, ClipboardList, TrendingUp } from "lucide-react";
+import { Users, AlertTriangle, ClipboardList, TrendingUp, Sparkles, Brain } from "lucide-react";
 import type { ClassAnalytics } from "@/types";
 
 export default function TeacherDashboard() {
   const { user } = useAuthStore();
   const [analytics, setAnalytics] = useState<ClassAnalytics | null>(null);
+  const [patterns, setPatterns] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,6 +27,8 @@ export default function TeacherDashboard() {
       const classSection = user?.class_section || "9-A";
       const { data } = await dashboardApi.teacherOverview(classSection);
       setAnalytics(data);
+      // Load AI patterns (non-blocking)
+      queryApi.classPatterns(classSection).then(r => setPatterns(r.data)).catch(() => {});
     } catch {
       toast.error("Failed to load dashboard data");
     } finally {
@@ -133,6 +136,54 @@ export default function TeacherDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* AI Class Patterns */}
+        {patterns && (
+          <Card className="border-t-4 border-t-indigo-400">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-indigo-500" />
+                AI-Detected Class Patterns
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {patterns.summary && (
+                <div className="rounded-lg bg-indigo-50/50 p-3">
+                  <p className="text-sm text-gray-700 leading-relaxed">{patterns.summary}</p>
+                </div>
+              )}
+              {patterns.patterns?.length > 0 && (
+                <div className="space-y-2">
+                  {patterns.patterns.slice(0, 5).map((p: any, idx: number) => (
+                    <div key={idx} className="flex items-start gap-3 rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors">
+                      <Sparkles className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{p.pattern || p.insight || p.description}</p>
+                        {p.affected_students && (
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Affects {p.affected_students} student{p.affected_students > 1 ? "s" : ""}
+                          </p>
+                        )}
+                      </div>
+                      {p.severity && (
+                        <Badge className={
+                          p.severity === "high" ? "bg-red-100 text-red-700" :
+                          p.severity === "medium" ? "bg-amber-100 text-amber-700" :
+                          "bg-green-100 text-green-700"
+                        }>
+                          {p.severity}
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {!patterns.patterns?.length && !patterns.summary && (
+                <p className="text-sm text-gray-400">Patterns will appear as more data is collected.</p>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppShell>
   );

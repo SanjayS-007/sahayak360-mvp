@@ -110,3 +110,11 @@ export const alertsApi = {
   getStudentMTSS: (studentId: string, subject?: string) =>
     api.get(`/alerts/student-mtss/${studentId}${subject ? `?subject=${subject}` : ""}`),
 };
+
+// --- Admin Analytics ---
+export const adminAnalyticsApi = {
+  riskHeatmap: () => api.get("/admin/analytics/risk-heatmap"),
+  sectionComparison: () => api.get("/admin/analytics/section-comparison"),
+  effectiveness: () => api.get("/admin/analytics/effectiveness"),
+  teacherWorkload: () => api.get("/admin/analytics/teacher-workload"),
+};
