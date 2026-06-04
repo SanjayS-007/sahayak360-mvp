@@ -2,7 +2,8 @@
   "platform": {
     "frontend": "https://sahayak360-mvp.vercel.app",
     "api": "https://sahayak360-api.onrender.com",
-    "api_docs": "https://sahayak360-api.onrender.com/docs"
+    "api_docs": "https://sahayak360-api.onrender.com/docs",
+    "frontend": "https://sahayak360-mvp.vercel.app"
   },
   "password_for_all": "Demo@2026Secure",
   "teachers": [
@@ -10,25 +11,28 @@
       "email": "teacher1@school.com",
       "password": "Demo@2026Secure",
       "user_id": "TCH-1001",
+      "role": "teacher",
       "full_name": "Ms. Priya Sharma",
       "class_section": "9-A",
-      "subject": "mathematics"
+      "subject": "MATH"
     },
     {
       "email": "teacher2@school.com",
       "password": "Demo@2026Secure",
       "user_id": "TCH-1002",
+      "role": "teacher",
       "full_name": "Mr. Rajesh Kumar",
       "class_section": "9-B",
-      "subject": "mathematics"
+      "subject": "SCI"
     },
     {
       "email": "teacher3@school.com",
       "password": "Demo@2026Secure",
       "user_id": "TCH-1003",
+      "role": "teacher",
       "full_name": "Ms. Anita Desai",
       "class_section": "9-A",
-      "subject": "mathematics"
+      "subject": "ENG"
     }
   ],
   "students": [
@@ -38,7 +42,8 @@
       "user_id": "STU-2001",
       "full_name": "Aarav Patel",
       "class_section": "9-A",
-      "performance_level": "struggling"
+      "mastery": "14%",
+      "risk_tier": "critical"
     },
     {
       "email": "student2@school.com",
@@ -46,7 +51,8 @@
       "user_id": "STU-2002",
       "full_name": "Diya Gupta",
       "class_section": "9-A",
-      "performance_level": "moderate"
+      "mastery": "65%",
+      "risk_tier": "moderate"
     },
     {
       "email": "student3@school.com",
@@ -54,7 +60,8 @@
       "user_id": "STU-2003",
       "full_name": "Arjun Nair",
       "class_section": "9-A",
-      "performance_level": "struggling"
+      "mastery": "16%",
+      "risk_tier": "critical"
     },
     {
       "email": "student4@school.com",
@@ -62,7 +69,8 @@
       "user_id": "STU-2004",
       "full_name": "Ananya Reddy",
       "class_section": "9-A",
-      "performance_level": "good"
+      "mastery": "84%",
+      "risk_tier": "low"
     },
     {
       "email": "student5@school.com",
@@ -70,7 +78,8 @@
       "user_id": "STU-2005",
       "full_name": "Vivaan Singh",
       "class_section": "9-A",
-      "performance_level": "excellent"
+      "mastery": "98%",
+      "risk_tier": "low"
     },
     {
       "email": "student6@school.com",
@@ -78,7 +87,8 @@
       "user_id": "STU-2006",
       "full_name": "Ishita Sharma",
       "class_section": "9-A",
-      "performance_level": "moderate"
+      "mastery": "48%",
+      "risk_tier": "high"
     },
     {
       "email": "student7@school.com",
@@ -86,7 +96,8 @@
       "user_id": "STU-2007",
       "full_name": "Rohan Mehta",
       "class_section": "9-A",
-      "performance_level": "good"
+      "mastery": "71%",
+      "risk_tier": "low"
     },
     {
       "email": "student8@school.com",
@@ -94,7 +105,8 @@
       "user_id": "STU-2008",
       "full_name": "Kavya Iyer",
       "class_section": "9-A",
-      "performance_level": "excellent"
+      "mastery": "95%",
+      "risk_tier": "low"
     },
     {
       "email": "student9@school.com",
@@ -102,7 +114,8 @@
       "user_id": "STU-2009",
       "full_name": "Aditya Joshi",
       "class_section": "9-B",
-      "performance_level": "moderate"
+      "mastery": "45%",
+      "risk_tier": "high"
     },
     {
       "email": "student10@school.com",
@@ -110,7 +123,80 @@
       "user_id": "STU-2010",
       "full_name": "Meera Krishnan",
       "class_section": "9-B",
-      "performance_level": "good"
+      "mastery": "68%",
+      "risk_tier": "low"
+    },
+    {
+      "email": "student11@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2011",
+      "full_name": "Priya Verma",
+      "class_section": "9-A",
+      "mastery": "46%",
+      "risk_tier": "high"
+    },
+    {
+      "email": "student12@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2012",
+      "full_name": "Karthik Rajan",
+      "class_section": "9-A",
+      "mastery": "75%",
+      "risk_tier": "low"
+    },
+    {
+      "email": "student13@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2013",
+      "full_name": "Sneha Kulkarni",
+      "class_section": "9-A",
+      "mastery": "23%",
+      "risk_tier": "critical"
+    },
+    {
+      "email": "student14@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2014",
+      "full_name": "Rahul Deshmukh",
+      "class_section": "9-A",
+      "mastery": "51%",
+      "risk_tier": "moderate"
+    },
+    {
+      "email": "student15@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2015",
+      "full_name": "Nisha Agarwal",
+      "class_section": "9-A",
+      "mastery": "52%",
+      "risk_tier": "moderate"
+    },
+    {
+      "email": "student16@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2016",
+      "full_name": "Amit Sharma",
+      "class_section": "9-B",
+      "mastery": "38%",
+      "risk_tier": "high"
+    },
+    {
+      "email": "student17@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2017",
+      "full_name": "Pooja Nair",
+      "class_section": "9-B",
+      "mastery": "72%",
+      "risk_tier": "low"
+    },
+    {
+      "email": "student18@school.com",
+      "password": "Demo@2026Secure",
+      "user_id": "STU-2018",
+      "full_name": "Vikram Patel",
+      "class_section": "9-B",
+      "mastery": "55%",
+      "risk_tier": "moderate"
     }
   ],
   "admins": [
@@ -118,12 +204,14 @@
       "email": "admin1@school.com",
       "password": "Demo@2026Secure",
       "user_id": "ADM-3001",
+      "role": "admin",
       "full_name": "Dr. Suresh Menon"
     },
     {
       "email": "admin2@school.com",
       "password": "Demo@2026Secure",
       "user_id": "ADM-3002",
+      "role": "admin",
       "full_name": "Ms. Lakshmi Rao"
     }
   ],
