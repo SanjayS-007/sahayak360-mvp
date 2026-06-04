@@ -328,3 +328,127 @@ async def admin_overview(
         "total_events": total_events.scalar() or 0,
         "active_interventions": active_tickets.scalar() or 0,
     }
+
+
+@router.get("/admin/teachers")
+async def admin_teacher_list(
+    user: User = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all teachers for admin panel."""
+    result = await db.execute(
+        select(User).where(User.role == "teacher").order_by(User.full_name)
+    )
+    teachers = result.scalars().all()
+    return [
+        {
+            "user_id": t.user_id,
+            "full_name": t.full_name,
+            "email": t.email,
+            "class_section": t.class_section or "",
+            "department_id": t.department_id or "",
+        }
+        for t in teachers
+    ]
+
+
+@router.delete("/admin/reset-demo-data")
+async def reset_demo_data(
+    user: User = Depends(require_role("admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reset all assessment data for clean re-seeding. Admin only."""
+    from sqlalchemy import delete, text
+
+    # Valid user IDs to keep
+    valid_ids = [
+        "TCH-1001", "TCH-1002", "TCH-1003",
+        "STU-2001", "STU-2002", "STU-2003", "STU-2004", "STU-2005",
+        "STU-2006", "STU-2007", "STU-2008", "STU-2009", "STU-2010",
+        "STU-2011", "STU-2012", "STU-2013", "STU-2014", "STU-2015",
+        "STU-2016", "STU-2017", "STU-2018",
+        "ADM-3001", "ADM-3002",
+    ]
+
+    # Delete all mastery records
+    r1 = await db.execute(delete(MasteryRecord))
+    # Delete all assessment events
+    r2 = await db.execute(delete(AssessmentEvent))
+    # Delete all intervention tickets
+    r3 = await db.execute(delete(InterventionTicket))
+    # Delete all quiz sessions
+    r4 = await db.execute(delete(QuizSession))
+    # Delete invalid users
+    r5 = await db.execute(
+        delete(User).where(User.user_id.notin_(valid_ids))
+    )
+
+    await db.commit()
+
+    return {
+        "deleted_mastery_records": r1.rowcount,
+        "deleted_assessment_events": r2.rowcount,
+        "deleted_tickets": r3.rowcount,
+        "deleted_quizzes": r4.rowcount,
+        "deleted_invalid_users": r5.rowcount,
+    }
+
+
+@router.get("/teacher/knowledge-graph")
+async def teacher_knowledge_graph(
+    class_section: str = Query(...),
+    subject: str = Query(default="mathematics"),
+    user: User = Depends(require_role("teacher", "admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get knowledge graph data: students, KCs, and mastery edges."""
+    # Get students
+    students_result = await db.execute(
+        select(User).where(
+            User.class_section == class_section,
+            User.role == "student",
+        )
+    )
+    students = students_result.scalars().all()
+
+    # Get all mastery records for these students
+    student_ids = [s.user_id for s in students]
+    mastery_result = await db.execute(
+        select(MasteryRecord).where(
+            MasteryRecord.student_id.in_(student_ids),
+            MasteryRecord.subject == subject,
+        )
+    )
+    records = mastery_result.scalars().all()
+
+    # Build graph nodes and edges
+    nodes = []
+    edges = []
+    kc_set = set()
+
+    for s in students:
+        nodes.append({
+            "id": s.user_id,
+            "label": s.full_name.split()[0],  # First name only
+            "type": "student",
+            "group": "student",
+        })
+
+    for r in records:
+        if r.kc_id not in kc_set:
+            kc_set.add(r.kc_id)
+            nodes.append({
+                "id": r.kc_id,
+                "label": r.kc_name,
+                "type": "kc",
+                "group": r.kc_id.split("-")[0].lower(),  # alg, geo, stat, trig
+            })
+
+        edges.append({
+            "source": r.student_id,
+            "target": r.kc_id,
+            "mastery": round(r.mastery, 2),
+            "level": r.mastery_level,
+        })
+
+    return {"nodes": nodes, "edges": edges}

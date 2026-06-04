@@ -12,6 +12,7 @@ import {
   LogOut,
   GraduationCap,
   ClipboardList,
+  Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const teacherLinks = [
   { href: "/teacher/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/teacher/input", label: "Input Data", icon: Upload },
   { href: "/teacher/students", label: "Students", icon: Users },
+  { href: "/teacher/knowledge-graph", label: "Knowledge Graph", icon: Network },
   { href: "/teacher/query", label: "AI Query", icon: MessageSquare },
 ];
 

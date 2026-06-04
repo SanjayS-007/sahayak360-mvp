@@ -34,7 +34,7 @@ export default function TeacherStudentsPage() {
 
   async function loadStudents() {
     try {
-      const { data } = await dashboardApi.studentList(user?.class_section || "8-A");
+      const { data } = await dashboardApi.studentList(user?.class_section || "9-A");
       setStudents(data || []);
     } catch {
       toast.error("Failed to load students");
