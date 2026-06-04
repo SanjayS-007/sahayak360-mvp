@@ -243,15 +243,15 @@ The architecture supports horizontal scaling: stateless API (JWT), managed datab
 |   | Teacher    |     | Student       |     | Admin         |     | Any Device    |                          |
 |   | Browser    |     | Browser       |     | Browser       |     | (PWA Ready)   |                          |
 |   +------+-----+     +-------+-------+     +-------+-------+     +-------+-------+                          |
-|          |                    |                      |                     |                                 |
-|          +--------------------+----------------------+---------------------+                                 |
+|          |                    |                      |                     |                                |
+|          +--------------------+----------------------+---------------------+                                |
 |                               | HTTPS (TLS 1.3)                                                             |
 |                               v                                                                             |
 |  +-----------------------------------------------------------------------------------------------+          |
-|  |                         VERCEL - FRONTEND HOSTING (Global CDN)                                 |          |
+|  |                         VERCEL - FRONTEND HOSTING (Global CDN)                                |          |
 |  |                                                                                               |          |
 |  |   +-----------------------------------------------------------------------------------+       |          |
-|  |   |                    NEXT.JS 14 APPLICATION (App Router)                             |       |          |
+|  |   |                    NEXT.JS 14 APPLICATION (App Router)                             |      |          |
 |  |   |                                                                                   |       |          |
 |  |   |  +----------------+  +----------------+  +----------------+  +----------------+   |       |          |
 |  |   |  | Student Portal |  | Teacher Portal |  | Admin Portal   |  | Auth Pages     |   |       |          |
@@ -269,16 +269,16 @@ The architecture supports horizontal scaling: stateless API (JWT), managed datab
 |  |   |  SHARED: Zustand (state) | shadcn/ui (components) | Tailwind | Recharts           |       |          |
 |  |   +-----------------------------------------------------------------------------------+       |          |
 |  |                                                                                               |          |
-|  |   Features: SSR | ISR | Edge Caching | Auto-HTTPS | Preview Deploys | Instant Rollback       |          |
+|  |   Features: SSR | ISR | Edge Caching | Auto-HTTPS | Preview Deploys | Instant Rollback        |          |
 |  +-----------------------------------------------------------------------------------------------+          |
 |                               |                                                                             |
 |                               | REST API calls (JSON + JWT Bearer Token)                                    |
 |                               v                                                                             |
 |  +-----------------------------------------------------------------------------------------------+          |
-|  |                         RENDER - BACKEND HOSTING (Auto-deploy from main)                       |          |
+|  |                         RENDER - BACKEND HOSTING (Auto-deploy from main)                      |          |
 |  |                                                                                               |          |
 |  |   +-----------------------------------------------------------------------------------+       |          |
-|  |   |                    FASTAPI APPLICATION (Python 3.13 | Uvicorn ASGI)                |       |          |
+|  |   |                    FASTAPI APPLICATION (Python 3.13 | Uvicorn ASGI)               |       |          |
 |  |   |                                                                                   |       |          |
 |  |   |  +---------------+  +---------------+  +---------------+  +---------------+       |       |          |
 |  |   |  | Auth Service  |  | Ingest Service|  | Quiz Service  |  | Analytics Svc |       |       |          |
@@ -288,26 +288,26 @@ The architecture supports horizontal scaling: stateless API (JWT), managed datab
 |  |   |  | Token refresh |  | Normalization |  | Submit+Score  |  | Risk Heatmap  |       |       |          |
 |  |   |  +---------------+  +---------------+  +---------------+  +---------------+       |       |          |
 |  |   |                                                                                   |       |          |
-|  |   |  +-----------------------------------------------------------------------------+ |       |          |
+|  |   |  +-----------------------------------------------------------------------------+  |       |          |
 |  |   |  |          INTELLIGENCE LAYER (Zero External Dependencies)                     | |       |          |
 |  |   |  |                                                                              | |       |          |
-|  |   |  |  +---------+ +-------------+ +----------+ +-------------+ +--------------+  | |       |          |
-|  |   |  |  |   BKT   | | Risk Scorer | |   MTSS   | |Gap Detector | |Ticket Manager|  | |       |          |
-|  |   |  |  |  Engine  | |   (ABC)     | |  Engine  | |  (Neo4j)    | |  (5-state)   |  | |       |          |
-|  |   |  |  |         | |             | |          | |             | |              |  | |       |          |
-|  |   |  |  | P(L|obs)| | 50A+25B+25C | | Tier 1-3 | | Root cause  | | open->closed |  | |       |          |
-|  |   |  |  | Bayesian| | composite   | | classify | | traversal   | |              |  | |       |          |
-|  |   |  |  +---------+ +-------------+ +----------+ +-------------+ +--------------+  | |       |          |
-|  |   |  |                                                                              | |       |          |
-|  |   |  |  Pipeline: ROUTE > VALIDATE > GAP > BKT > RISK > MTSS > TICKET > PERSIST    | |       |          |
-|  |   |  +-----------------------------------------------------------------------------+ |       |          |
+|  |   |  |  +---------+ +-------------+ +----------+ +-------------+ +--------------+  |  |       |          |
+|  |   |  |  |   BKT   | | Risk Scorer | |   MTSS   | |Gap Detector | |Ticket Manager|  |  |       |          |
+|  |   |  |  |  Engine  | |   (ABC)     | |  Engine  | |  (Neo4j)    | |  (5-state)  |  |  |       |          |
+|  |   |  |  |         | |             | |          | |             | |              |  |  |       |          |
+|  |   |  |  | P(L|obs)| | 50A+25B+25C | | Tier 1-3 | | Root cause  | | open->closed |  |  |       |          |
+|  |   |  |  | Bayesian| | composite   | | classify | | traversal   | |              |  |  |       |          |
+|  |   |  |  +---------+ +-------------+ +----------+ +-------------+ +--------------+  |  |       |          |
+|  |   |  |                                                                             |  |       |          |
+|  |   |  |  Pipeline: ROUTE > VALIDATE > GAP > BKT > RISK > MTSS > TICKET > PERSIST    |  |       |          |
+|  |   |  +-----------------------------------------------------------------------------+  |       |          |
 |  |   +-----------------------------------------------------------------------------------+       |          |
 |  |                                                                                               |          |
-|  |   Features: Auto-deploy | Health checks | Auto-HTTPS | Managed DB | Zero-downtime            |          |
+|  |   Features: Auto-deploy | Health checks | Auto-HTTPS | Managed DB | Zero-downtime             |          |
 |  +-----------------------------------------------------------------------------------------------+          |
-|                |                     |                        |                                              |
+|                |                     |                        |                                             |
 |                | asyncpg (async)     | Bolt protocol          | REST API                                    |
-|                v                     v                        v                                              |
+|                v                     v                        v                                             |
 |  +-----------------------------------------------------------------------------------------------+          |
 |  |                              DATA & EXTERNAL SERVICES                                         |          |
 |  |                                                                                               |          |
@@ -1006,6 +1006,6 @@ npm run dev
 
 <div align="center">
 
-**Built for SIH 2025 — solving real problems in Indian education with production-grade engineering.**
+**Built for SAHAI 2026 — solving real problems in Indian education with production-grade engineering.**
 
 </div>
