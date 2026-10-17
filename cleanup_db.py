@@ -2,10 +2,12 @@
 Clean up database: remove test users, old mastery records, and assessment events.
 Then reseed will produce clean realistic data.
 """
+import os
+
 import psycopg2
 
-# External connection string (Render external hostname)
-CONN = "postgresql://sahayak360_e5rn_user:hiSNKWWuNFHvcv4obFQZ51Nn2h5iPNUn@dpg-d8g53ruk1jcs73d71nd0-a.oregon-postgres.render.com/sahayak360_e5rn"
+# Set DATABASE_URL to the external Render Postgres URL before running.
+CONN = os.environ["DATABASE_URL"]
 
 # Valid student IDs we want to keep
 VALID_STUDENTS = [

@@ -1,3 +1,4 @@
+import socket
 from contextlib import asynccontextmanager
 from typing import List
 
@@ -107,11 +108,47 @@ app.include_router(notifications_router, prefix="/api/notifications", tags=["Not
 app.include_router(gamification_router, prefix="/api/gamification", tags=["Gamification"])
 
 
+def _is_database_unavailable(exc: BaseException) -> bool:
+    current: BaseException | None = exc
+    seen: set[int] = set()
+    markers = (
+        "name or service not known",
+        "getaddrinfo",
+        "could not connect",
+        "connection refused",
+        "ssl connection has been closed",
+        "timeout",
+        "network is unreachable",
+    )
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        text = str(current).lower()
+        if isinstance(current, (ConnectionError, TimeoutError, socket.gaierror)):
+            return True
+        if type(current).__name__ in {"OperationalError", "InterfaceError"} and any(
+            marker in text for marker in markers
+        ):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import logging, traceback
+    from fastapi import HTTPException as FastAPIHTTPException
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+    if isinstance(exc, (FastAPIHTTPException, StarletteHTTPException)):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
     logging.getLogger("sahayak360").error(f"Unhandled: {exc}\n{traceback.format_exc()}")
-    return JSONResponse(status_code=500, content={"detail": str(exc), "type": type(exc).__name__})
+    if _is_database_unavailable(exc):
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Sign-in is unavailable because the database cannot be reached."},
+        )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 @app.get("/", tags=["Health"])

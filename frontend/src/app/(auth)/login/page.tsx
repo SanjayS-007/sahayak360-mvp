@@ -74,8 +74,20 @@ export default function LoginPage() {
       toast.success(`Welcome, ${resp.full_name}!`);
       router.push(`/${resp.role}/dashboard`);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { detail?: string } } };
-      toast.error(error.response?.data?.detail || "Login failed. Check your credentials.");
+      const error = err as {
+        message?: string;
+        response?: { data?: { detail?: string | Array<{ msg?: string }> } };
+      };
+      const detail = error.response?.data?.detail;
+      const message =
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+            ? detail.map((item) => item.msg).filter(Boolean).join(", ")
+            : error.response
+              ? "Login failed. Check your credentials."
+              : "Cannot reach the API. Wait a few seconds and try again.";
+      toast.error(message || error.message || "Login failed.");
     } finally {
       setIsSubmitting(false);
     }
