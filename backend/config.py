@@ -40,7 +40,7 @@ def prepare_async_database(raw: str) -> tuple[str, tuple[tuple[str, object], ...
     host = parsed.host or ""
     port = parsed.port or 5432
     if host.startswith("dpg-") and "." not in host and not _host_resolves(host, port):
-        region = os.getenv("RENDER_POSTGRES_REGION", "oregon")
+        region = os.getenv("RENDER_POSTGRES_REGION", "singapore")
         host = f"{host}.{region}-postgres.render.com"
 
     use_ssl = host.endswith(".render.com") or sslmode in {
